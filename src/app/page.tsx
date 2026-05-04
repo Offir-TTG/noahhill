@@ -76,7 +76,7 @@ export default async function Home() {
       <LatestRelease content={content} />
       <Discography songs={songsForList} />
       <Videos videos={videos.length ? videos : FALLBACK_VIDEOS} fallbackImg={content.hero.photo_url ?? "/images/noah-hero.jpeg"} />
-      <Tour rows={tour.length ? tour : FALLBACK_TOUR} />
+      <Tour rows={tour} />
       <About content={content} />
       <Newsletter content={content} />
       <Footer content={content} />
@@ -289,6 +289,8 @@ function Videos({ videos, fallbackImg }: { videos: Video[]; fallbackImg: string 
 
 /* ---------- TOUR ---------- */
 function Tour({ rows }: { rows: TourDate[] }) {
+  const isEmpty = rows.length === 0;
+
   return (
     <section id="tour" className="relative grain bg-midnight py-28 sm:py-40 overflow-hidden">
       <div className="halo animate-drift" style={{ width: 600, height: 600, right: "-10%", top: "30%", background: "radial-gradient(circle, rgba(74,124,133,0.2), transparent 60%)" }} />
@@ -297,35 +299,68 @@ function Tour({ rows }: { rows: TourDate[] }) {
         <div className="flex items-end justify-between gap-6">
           <SectionLabel index="04" title="on tour" />
           <p className="hidden sm:block text-xs uppercase tracking-[0.3em] text-cream-dim">
-            world tour · 2026
+            {isEmpty ? "between tours" : "world tour · 2026"}
           </p>
         </div>
 
-        <ul className="mt-16 divide-y divide-white/10 border-y border-white/10">
-          {rows.map((show, i) => (
-            <li key={show.show_date + show.city + i} className="group">
-              <a href={show.ticket_url ?? "#"} target={show.ticket_url?.startsWith("http") ? "_blank" : undefined}
-                 className="grid grid-cols-12 gap-4 items-center py-6 px-2 hover:bg-cream/5 transition">
-                <span className="col-span-3 sm:col-span-2 font-display text-cream text-xl tracking-wide">{show.show_date}</span>
-                <span className="col-span-5 sm:col-span-4 font-display lowercase text-cream text-2xl sm:text-3xl">{show.city}</span>
-                <span className="col-span-3 hidden sm:block text-cream-dim text-sm">{show.venue ?? "—"}</span>
-                <span className="col-span-1 hidden sm:flex items-center gap-1 text-xs uppercase tracking-[0.3em] text-cream-dim">
-                  <MapPin className="size-3" /> {show.country ?? ""}
-                </span>
-                <span className="col-span-4 sm:col-span-2 flex justify-end items-center gap-2 text-xs uppercase tracking-[0.2em] text-cream-dim group-hover:text-cream transition">
-                  tickets
-                  <ArrowUpRight className="size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                </span>
-              </a>
-            </li>
-          ))}
-        </ul>
+        {isEmpty ? (
+          <TourEmptyState />
+        ) : (
+          <>
+            <ul className="mt-16 divide-y divide-white/10 border-y border-white/10">
+              {rows.map((show, i) => (
+                <li key={show.show_date + show.city + i} className="group">
+                  <a href={show.ticket_url ?? "#"} target={show.ticket_url?.startsWith("http") ? "_blank" : undefined}
+                     className="grid grid-cols-12 gap-4 items-center py-6 px-2 hover:bg-cream/5 transition">
+                    <span className="col-span-3 sm:col-span-2 font-display text-cream text-xl tracking-wide">{show.show_date}</span>
+                    <span className="col-span-5 sm:col-span-4 font-display lowercase text-cream text-2xl sm:text-3xl">{show.city}</span>
+                    <span className="col-span-3 hidden sm:block text-cream-dim text-sm">{show.venue ?? "—"}</span>
+                    <span className="col-span-1 hidden sm:flex items-center gap-1 text-xs uppercase tracking-[0.3em] text-cream-dim">
+                      <MapPin className="size-3" /> {show.country ?? ""}
+                    </span>
+                    <span className="col-span-4 sm:col-span-2 flex justify-end items-center gap-2 text-xs uppercase tracking-[0.2em] text-cream-dim group-hover:text-cream transition">
+                      tickets
+                      <ArrowUpRight className="size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
 
-        <p className="mt-8 text-xs uppercase tracking-[0.3em] text-cream-dim">
-          more dates announced soon — sign up below to be the first to know.
-        </p>
+            <p className="mt-8 text-xs uppercase tracking-[0.3em] text-cream-dim">
+              more dates announced soon — sign up below to be the first to know.
+            </p>
+          </>
+        )}
       </div>
     </section>
+  );
+}
+
+function TourEmptyState() {
+  return (
+    <div className="mt-16 border-y border-white/10 py-20 sm:py-28">
+      <div className="max-w-2xl mx-auto text-center px-4">
+        <p className="text-[10px] uppercase tracking-[0.5em] text-cream-dim">currently</p>
+        <h3 className="mt-4 font-display lowercase font-semibold leading-[0.9] text-cream"
+            style={{ fontSize: "clamp(2.75rem, 7vw, 5rem)" }}>
+          off the road.
+        </h3>
+        <p className="mt-6 text-base leading-relaxed text-cream-dim max-w-md mx-auto">
+          no dates on the books right now — back in the studio, working on what&apos;s next.
+        </p>
+        <p className="mt-3 text-base leading-relaxed text-cream-dim max-w-md mx-auto">
+          sign up below to be the first to hear when shows are announced.
+        </p>
+        <a
+          href="#newsletter"
+          className="mt-10 inline-flex items-center justify-center gap-3 rounded-full border border-cream/40 px-7 py-3 text-xs font-medium uppercase tracking-[0.2em] text-cream hover:bg-cream/5 hover:border-cream transition"
+        >
+          get tour alerts
+          <ArrowUpRight className="size-3.5" />
+        </a>
+      </div>
+    </div>
   );
 }
 
@@ -374,7 +409,7 @@ function Stat({ k, v }: { k: string; v: string }) {
 /* ---------- NEWSLETTER ---------- */
 function Newsletter({ content }: { content: SiteContent }) {
   return (
-    <section className="relative grain bg-midnight py-28 sm:py-32 overflow-hidden">
+    <section id="newsletter" className="relative grain bg-midnight py-28 sm:py-32 overflow-hidden">
       <div className="halo animate-drift-slow" style={{ width: 700, height: 700, left: "50%", top: "-20%", transform: "translateX(-50%)", background: "radial-gradient(circle, rgba(74,124,133,0.35), transparent 60%)" }} />
       <div className="relative mx-auto max-w-3xl px-6 sm:px-10 text-center">
         <p className="text-xs uppercase tracking-[0.4em] text-cream-dim">{content.newsletter.eyebrow}</p>
