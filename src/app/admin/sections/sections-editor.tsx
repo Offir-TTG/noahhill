@@ -2,15 +2,34 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Save, Plus, Trash2 } from "lucide-react";
+import { Save, Plus, Trash2, Upload } from "lucide-react";
 import type { SiteContent } from "@/lib/site-content";
 import { saveSiteContent } from "./actions";
+import { createClient } from "@/lib/supabase/client";
+
+const slugify = (s: string) =>
+  s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 60) || "image";
+
+/** Direct browser-to-Storage upload. Authed via the user's admin session. */
+async function uploadImageToStorage(file: File): Promise<string> {
+  const supabase = createClient();
+  const ext  = file.name.split(".").pop()?.toLowerCase() || "jpg";
+  const path = `${Date.now()}-${slugify(file.name.replace(/\.[^.]+$/, ""))}.${ext}`;
+  const { error } = await supabase.storage.from("images").upload(path, file, {
+    cacheControl: "3600",
+    upsert: false,
+    contentType: file.type || undefined,
+  });
+  if (error) throw new Error(`Upload failed: ${error.message}`);
+  return supabase.storage.from("images").getPublicUrl(path).data.publicUrl;
+}
 
 export default function SectionsEditor({ initial }: { initial: SiteContent }) {
   const [content, setContent] = useState<SiteContent>(initial);
   const [heroFile, setHeroFile] = useState<File | null>(null);
   const [singleFile, setSingleFile] = useState<File | null>(null);
   const [aboutFile, setAboutFile] = useState<File | null>(null);
+  const [uploadingLabel, setUploadingLabel] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -20,16 +39,33 @@ export default function SectionsEditor({ initial }: { initial: SiteContent }) {
     setError(null);
     startTransition(async () => {
       try {
-        // The action returns the merged content (with any newly-uploaded image URLs).
-        // We swap our local state in so the previews refresh without a page reload.
-        const updated = await saveSiteContent(content, { hero: heroFile, single: singleFile, about: aboutFile });
-        setContent(updated);
+        // 1. Upload any newly-selected images directly to Supabase Storage.
+        let next = content;
+        if (heroFile) {
+          setUploadingLabel("hero photo");
+          const url = await uploadImageToStorage(heroFile);
+          next = { ...next, hero: { ...next.hero, photo_url: url } };
+        }
+        if (singleFile) {
+          setUploadingLabel("single cover");
+          const url = await uploadImageToStorage(singleFile);
+          next = { ...next, single: { ...next.single, cover_url: url } };
+        }
+        if (aboutFile) {
+          setUploadingLabel("about portrait");
+          const url = await uploadImageToStorage(aboutFile);
+          next = { ...next, about: { ...next.about, portrait_url: url } };
+        }
+        setUploadingLabel(null);
+
+        // 2. Persist the JSON blob server-side. Tiny payload — just text.
+        const saved = await saveSiteContent(next);
+        setContent(saved);
         setHeroFile(null); setSingleFile(null); setAboutFile(null);
         setSavedAt(Date.now());
-        // Refresh the route so server components (e.g. the public site if open in the same tab)
-        // pick up the new revalidated data on next navigation.
         router.refresh();
       } catch (e) {
+        setUploadingLabel(null);
         setError(e instanceof Error ? e.message : "Save failed.");
       }
     });
@@ -43,17 +79,24 @@ export default function SectionsEditor({ initial }: { initial: SiteContent }) {
     <div className="space-y-12">
       {/* Save bar */}
       <div className="sticky top-16 md:top-0 z-20 -mx-4 sm:-mx-10 px-4 sm:px-10 py-3 bg-ink/85 backdrop-blur border-b border-white/5 flex items-center justify-between gap-4">
-        <div className="text-xs text-cream-dim">
-          {savedAt && <span className="text-cream">saved.</span>}
-          {error && <span className="text-red-300">{error}</span>}
+        <div className="text-xs text-cream-dim flex items-center gap-2 min-w-0">
+          {uploadingLabel ? (
+            <span className="inline-flex items-center gap-1.5 text-cream truncate">
+              <Upload className="size-3 animate-pulse" />
+              uploading {uploadingLabel}…
+            </span>
+          ) : savedAt ? (
+            <span className="text-cream">saved.</span>
+          ) : null}
+          {error && <span className="text-red-300 truncate">{error}</span>}
         </div>
         <button
           onClick={save}
           disabled={isPending}
-          className="inline-flex items-center gap-2 rounded-sm bg-cream px-5 py-2.5 text-xs font-medium uppercase tracking-[0.2em] text-ink hover:bg-gold transition disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-sm bg-cream px-5 py-2.5 text-xs font-medium uppercase tracking-[0.2em] text-ink hover:bg-gold transition disabled:opacity-50 shrink-0"
         >
           <Save className="size-3.5" />
-          {isPending ? "saving…" : "save changes"}
+          {isPending ? (uploadingLabel ? "uploading…" : "saving…") : "save changes"}
         </button>
       </div>
 
