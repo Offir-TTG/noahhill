@@ -3,117 +3,130 @@ import { Music2, Mail, Play, ArrowUpRight, MapPin } from "lucide-react";
 import CoverPlayer from "./cover-player";
 import SongList from "./song-list";
 import Nav from "./nav";
+import { createClient } from "@/lib/supabase/server";
+import { mergeContent, type SiteContent } from "@/lib/site-content";
 
-const HERO_IMG = "/images/noah-hero.jpeg";
-const COVER_IMG = "/images/noah-hero.jpeg"; // same shot doubles as the cover until artwork is added
+export const dynamic = "force-dynamic";
 
-const STREAMING = [
-  { name: "Spotify",     href: "#", icon: SpotifyIcon },
-  { name: "Apple Music", href: "#", icon: AppleIcon },
-  { name: "YouTube",     href: "#", icon: YoutubeIcon },
-  { name: "Amazon",      href: "#", icon: AmazonIcon },
+type Song = { id?: string; title: string; year?: string | null; duration?: string | null; audio_url?: string | null };
+type Video = { title: string; year: string | null; duration: string | null; thumbnail_url: string | null; video_url: string | null };
+type TourDate = { show_date: string; city: string; venue: string | null; country: string | null; ticket_url: string | null };
+
+const FALLBACK_SONGS: Song[] = [
+  { title: "hurt somebody", year: "2026", duration: "3:42", audio_url: "/music/Hurt Somebody.wav" },
+  { title: "fix me",        year: "2025", duration: "3:18", audio_url: "/music/Fix Me.wav" },
 ];
 
-const VIDEOS = [
-  { title: "hurt somebody",  year: "2026", duration: "3:42" },
-  { title: "low light",      year: "2025", duration: "4:08" },
-  { title: "out of nowhere", year: "2025", duration: "3:21" },
+const FALLBACK_VIDEOS: Video[] = [
+  { title: "hurt somebody",  year: "2026", duration: "3:42", thumbnail_url: null, video_url: null },
+  { title: "low light",      year: "2025", duration: "4:08", thumbnail_url: null, video_url: null },
+  { title: "out of nowhere", year: "2025", duration: "3:21", thumbnail_url: null, video_url: null },
 ];
 
-const SONGS = [
-  { title: "hurt somebody", year: "2026", duration: "3:42", audio: "/music/Hurt Somebody.wav" },
-  { title: "fix me",        year: "2025", duration: "3:18", audio: "/music/Fix Me.wav" },
+const FALLBACK_TOUR: TourDate[] = [
+  { show_date: "MAY 18", city: "New York",   venue: "Music Hall of Williamsburg", country: "US", ticket_url: null },
+  { show_date: "JUN 02", city: "Berlin",     venue: "Festsaal Kreuzberg",         country: "DE", ticket_url: null },
+  { show_date: "JUN 06", city: "Amsterdam",  venue: "Paradiso",                   country: "NL", ticket_url: null },
+  { show_date: "JUN 11", city: "London",     venue: "Omeara",                     country: "UK", ticket_url: null },
+  { show_date: "JUN 14", city: "Paris",      venue: "La Maroquinerie",            country: "FR", ticket_url: null },
+  { show_date: "JUL 08", city: "Los Angeles",venue: "The Roxy",                   country: "US", ticket_url: null },
 ];
 
-const TOUR = [
-  { date: "MAY 18", city: "Tel Aviv",   venue: "Barby",                country: "IL" },
-  { date: "JUN 02", city: "Berlin",     venue: "Festsaal Kreuzberg",   country: "DE" },
-  { date: "JUN 06", city: "Amsterdam",  venue: "Paradiso",             country: "NL" },
-  { date: "JUN 11", city: "London",     venue: "Omeara",               country: "UK" },
-  { date: "JUN 14", city: "Paris",      venue: "La Maroquinerie",      country: "FR" },
-  { date: "JUL 02", city: "New York",   venue: "Music Hall of Williamsburg", country: "US" },
-  { date: "JUL 08", city: "Los Angeles",venue: "The Roxy",             country: "US" },
-];
+async function loadAll() {
+  try {
+    const supabase = await createClient();
+    const [contentRes, songsRes, videosRes, tourRes] = await Promise.all([
+      supabase.from("site_content").select("data").eq("id", 1).maybeSingle(),
+      supabase.from("songs").select("*").order("sort_order").order("created_at"),
+      supabase.from("videos").select("*").order("sort_order").order("created_at"),
+      supabase.from("tour_dates").select("*").order("sort_order").order("created_at"),
+    ]);
 
-export default function Home() {
+    return {
+      content: mergeContent((contentRes.data?.data ?? null) as Partial<SiteContent> | null),
+      songs:  (songsRes.data  as Song[]     | null) ?? FALLBACK_SONGS,
+      videos: (videosRes.data as Video[]    | null) ?? FALLBACK_VIDEOS,
+      tour:   (tourRes.data   as TourDate[] | null) ?? FALLBACK_TOUR,
+    };
+  } catch {
+    return {
+      content: mergeContent(null),
+      songs: FALLBACK_SONGS,
+      videos: FALLBACK_VIDEOS,
+      tour: FALLBACK_TOUR,
+    };
+  }
+}
+
+export default async function Home() {
+  const { content, songs, videos, tour } = await loadAll();
+  const songsForList = songs.map((s) => ({
+    title: s.title,
+    year: s.year ?? "",
+    duration: s.duration ?? "",
+    audio: s.audio_url ?? "",
+  })).filter((s) => s.audio);
+
   return (
     <>
       <Nav />
-      <Hero />
-      <Marquee />
-      <LatestRelease />
-      <Discography />
-      <Videos />
-      <Tour />
-      <About />
-      <Newsletter />
-      <Footer />
+      <Hero content={content} />
+      <Marquee items={content.marquee.items} />
+      <LatestRelease content={content} />
+      <Discography songs={songsForList} />
+      <Videos videos={videos.length ? videos : FALLBACK_VIDEOS} fallbackImg={content.hero.photo_url ?? "/images/noah-hero.jpeg"} />
+      <Tour rows={tour.length ? tour : FALLBACK_TOUR} />
+      <About content={content} />
+      <Newsletter content={content} />
+      <Footer content={content} />
     </>
   );
 }
 
 /* ---------- HERO ---------- */
-function Hero() {
+function Hero({ content }: { content: SiteContent }) {
+  const photo = content.hero.photo_url ?? "/images/noah-hero.jpeg";
   return (
     <section id="top" className="relative grain min-h-screen overflow-hidden">
-      {/* Atmospheric halos */}
       <div className="halo animate-drift" style={{ width: 720, height: 720, left: "-10%", top: "10%", background: "radial-gradient(circle, rgba(74,124,133,0.55), transparent 60%)" }} />
       <div className="halo animate-drift-slow" style={{ width: 540, height: 540, right: "-8%", bottom: "-10%", background: "radial-gradient(circle, rgba(200,178,127,0.18), transparent 60%)" }} />
 
-      {/* Hero portrait — full bleed on the right */}
       <div className="absolute inset-0">
-        <Image
-          src={HERO_IMG}
-          alt="Noah Hill"
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-[75%_25%] opacity-90"
-        />
-        {/* Cinematic gradients */}
+        <Image src={photo} alt="Noah Hill" fill priority sizes="100vw" className="object-cover object-[75%_25%] opacity-90" />
         <div className="absolute inset-0 bg-gradient-to-r from-[var(--ink)] via-[var(--ink)]/85 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-[var(--ink)] via-transparent to-transparent" />
       </div>
 
-      {/* Side rail */}
       <div className="absolute left-6 top-1/2 -translate-y-1/2 hidden lg:flex flex-col items-center gap-6 text-[10px] text-cream-dim">
-        <span className="vert uppercase">est · 2026</span>
+        <span className="vert uppercase">{content.hero.side_label}</span>
         <span className="h-24 w-px bg-cream-dim/40" />
       </div>
 
-      {/* Content */}
       <div className="relative z-10 mx-auto flex min-h-screen max-w-7xl flex-col justify-end px-6 pb-24 pt-40 sm:px-10">
         <p className="animate-rise text-xs uppercase tracking-[0.5em] text-cream-dim mb-6">
-          new single · hurt somebody · out now
+          {content.hero.eyebrow}
         </p>
         <h1 className="animate-rise font-display lowercase font-semibold leading-[0.85] tracking-tight text-cream"
             style={{ animationDelay: "120ms", fontSize: "clamp(4rem, 14vw, 12rem)" }}>
-          noah
+          {content.hero.name_line1}
           <br />
-          hill
+          {content.hero.name_line2}
         </h1>
         <div className="animate-rise mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center" style={{ animationDelay: "260ms" }}>
-          <a
-            href="#music"
-            className="group inline-flex w-full sm:w-auto items-center justify-center gap-3 rounded-full bg-cream px-7 py-4 text-sm font-medium uppercase tracking-[0.2em] text-ink hover:bg-gold transition-colors"
-          >
+          <a href="#music" className="group inline-flex w-full sm:w-auto items-center justify-center gap-3 rounded-full bg-cream px-7 py-4 text-sm font-medium uppercase tracking-[0.2em] text-ink hover:bg-gold transition-colors">
             <Play className="size-4 fill-ink" />
             listen now
           </a>
-          <a
-            href="#videos"
-            className="group inline-flex w-full sm:w-auto items-center justify-center gap-3 rounded-full border border-cream/40 px-7 py-4 text-sm font-medium uppercase tracking-[0.2em] text-cream hover:border-cream hover:bg-cream/5 transition-colors"
-          >
+          <a href="#videos" className="group inline-flex w-full sm:w-auto items-center justify-center gap-3 rounded-full border border-cream/40 px-7 py-4 text-sm font-medium uppercase tracking-[0.2em] text-cream hover:border-cream hover:bg-cream/5 transition-colors">
             watch video
             <ArrowUpRight className="size-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </a>
         </div>
 
-        {/* Bottom meta strip */}
         <div className="animate-rise mt-20 flex items-end justify-between text-xs text-cream-dim" style={{ animationDelay: "400ms" }}>
           <div className="space-y-1">
-            <p className="uppercase tracking-[0.3em]">singer · songwriter · producer</p>
-            <p className="text-cream-dim/70">based in new york</p>
+            <p className="uppercase tracking-[0.3em]">{content.hero.role}</p>
+            <p className="text-cream-dim/70">{content.hero.location}</p>
           </div>
           <div className="hidden sm:block text-right space-y-1">
             <p className="uppercase tracking-[0.3em]">scroll</p>
@@ -126,12 +139,13 @@ function Hero() {
 }
 
 /* ---------- MARQUEE ---------- */
-function Marquee() {
-  const items = ["hurt somebody", "out now", "noah hill", "new single", "world tour 2026", "hurt somebody", "out now", "noah hill"];
+function Marquee({ items }: { items: string[] }) {
+  const safe = items.length ? items : ["noah hill"];
+  const repeated = [...safe, ...safe];
   return (
     <div className="border-y border-white/5 bg-midnight overflow-hidden py-6">
       <div className="flex w-max animate-marquee gap-12 whitespace-nowrap font-display lowercase text-cream/80 text-3xl sm:text-5xl">
-        {[...items, ...items].map((t, i) => (
+        {repeated.map((t, i) => (
           <span key={i} className="flex items-center gap-12">
             {t}
             <span className="size-2 rounded-full bg-gold/70 inline-block" />
@@ -143,7 +157,25 @@ function Marquee() {
 }
 
 /* ---------- LATEST RELEASE ---------- */
-function LatestRelease() {
+const STREAMING_ICONS: Record<string, React.FC<React.SVGProps<SVGSVGElement>>> = {
+  spotify:     SpotifyIcon,
+  "apple music": AppleIcon,
+  apple:       AppleIcon,
+  youtube:     YoutubeIcon,
+  amazon:      AmazonIcon,
+  tiktok:      TiktokIcon,
+  instagram:   InstagramIcon,
+};
+
+function streamingIcon(name: string) {
+  return STREAMING_ICONS[name.trim().toLowerCase()] ?? SpotifyIcon;
+}
+
+function LatestRelease({ content }: { content: SiteContent }) {
+  const cover = content.single.cover_url ?? "/images/noah-hero.jpeg";
+  const audioFromDb = content.single.streaming.find(s => s.url && /\.(wav|mp3|m4a)$/.test(s.url))?.url;
+  const audioSrc = audioFromDb ?? "/music/Hurt Somebody.wav";
+
   return (
     <section id="music" className="relative grain bg-midnight py-28 sm:py-40 overflow-hidden">
       <div className="halo animate-drift-slow" style={{ width: 600, height: 600, left: "30%", top: "20%", background: "radial-gradient(circle, rgba(74,124,133,0.25), transparent 60%)" }} />
@@ -152,46 +184,38 @@ function LatestRelease() {
         <SectionLabel index="01" title="latest release" />
 
         <div className="mt-16 grid gap-12 lg:grid-cols-12 lg:gap-20 items-center">
-          {/* Cover + inline player */}
           <div className="lg:col-span-5">
-            <CoverPlayer
-              src="/music/Hurt Somebody.wav"
-              cover={COVER_IMG}
-              alt="hurt somebody — cover art"
-            />
+            <CoverPlayer src={audioSrc} cover={cover} alt={`${content.single.title_line1} ${content.single.title_line2} — cover art`} />
             <p className="mt-4 text-xs uppercase tracking-[0.3em] text-cream-dim flex items-center gap-3">
               <span className="size-1.5 rounded-full bg-gold animate-pulse" />
               now playing on every platform
             </p>
           </div>
 
-          {/* Details */}
           <div className="lg:col-span-7">
-            <p className="text-xs uppercase tracking-[0.4em] text-cream-dim">single · 2026</p>
+            <p className="text-xs uppercase tracking-[0.4em] text-cream-dim">{content.single.eyebrow}</p>
             <h2 className="mt-4 font-display lowercase font-semibold leading-[0.9] text-cream"
                 style={{ fontSize: "clamp(3rem, 7vw, 6rem)" }}>
-              hurt<br/>somebody
+              {content.single.title_line1}<br/>{content.single.title_line2}
             </h2>
             <p className="mt-8 max-w-lg text-base leading-relaxed text-cream-dim">
-              A late-night confession dressed in hushed drums and warm tape saturation —
-              recorded between Tel Aviv and a small studio in East London. The first taste of
-              what's coming.
+              {content.single.description}
             </p>
 
             <div className="mt-12 grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {STREAMING.map(({ name, href, icon: Icon }) => (
-                <a
-                  key={name}
-                  href={href}
-                  className="group flex items-center justify-between gap-2 rounded-sm border border-cream/15 bg-steel/40 px-3 py-3 sm:py-2.5 text-xs text-cream hover:border-cream/40 hover:bg-steel transition"
-                >
-                  <span className="flex items-center gap-3">
-                    <Icon className="size-4 text-cream-dim group-hover:text-cream transition" />
-                    <span className="lowercase tracking-wide">{name}</span>
-                  </span>
-                  <ArrowUpRight className="size-3.5 text-cream-dim opacity-0 group-hover:opacity-100 transition" />
-                </a>
-              ))}
+              {content.single.streaming.map(({ name, url }) => {
+                const Icon = streamingIcon(name);
+                return (
+                  <a key={name} href={url || "#"} target={url?.startsWith("http") ? "_blank" : undefined}
+                     className="group flex items-center justify-between gap-2 rounded-sm border border-cream/15 bg-steel/40 px-3 py-3 sm:py-2.5 text-xs text-cream hover:border-cream/40 hover:bg-steel transition">
+                    <span className="flex items-center gap-3">
+                      <Icon className="size-4 text-cream-dim group-hover:text-cream transition" />
+                      <span className="lowercase tracking-wide">{name}</span>
+                    </span>
+                    <ArrowUpRight className="size-3.5 text-cream-dim opacity-0 group-hover:opacity-100 transition" />
+                  </a>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -201,73 +225,61 @@ function LatestRelease() {
 }
 
 /* ---------- DISCOGRAPHY ---------- */
-function Discography() {
+function Discography({ songs }: { songs: { title: string; year: string; duration: string; audio: string }[] }) {
+  if (songs.length === 0) return null;
   return (
     <section id="songs" className="relative bg-ink py-28 sm:py-40">
       <div className="mx-auto max-w-7xl px-6 sm:px-10">
         <div className="flex items-end justify-between gap-6">
           <SectionLabel index="02" title="all songs" />
           <p className="hidden sm:block text-xs uppercase tracking-[0.3em] text-cream-dim">
-            {SONGS.length.toString().padStart(2, "0")} tracks
+            {songs.length.toString().padStart(2, "0")} tracks
           </p>
         </div>
-
-        <SongList songs={SONGS} />
+        <SongList songs={songs} />
       </div>
     </section>
   );
 }
 
 /* ---------- VIDEOS ---------- */
-function Videos() {
+function Videos({ videos, fallbackImg }: { videos: Video[]; fallbackImg: string }) {
   return (
     <section id="videos" className="relative bg-ink py-28 sm:py-40">
       <div className="mx-auto max-w-7xl px-6 sm:px-10">
         <SectionLabel index="03" title="visuals" />
         <div className="mt-16 grid gap-6 md:grid-cols-3">
-          {VIDEOS.map((v, i) => (
-            <a
-              key={v.title}
-              href="#"
-              className="group relative aspect-[4/5] overflow-hidden rounded-sm bg-steel"
-            >
-              {/* Thumbnail (uses hero photo for first card; placeholder gradient panels for others) */}
-              {i === 0 ? (
-                <Image
-                  src={HERO_IMG}
-                  alt={v.title}
-                  fill
-                  sizes="(min-width: 768px) 33vw, 90vw"
-                  className="object-cover opacity-80 transition-all duration-700 group-hover:scale-105 group-hover:opacity-100"
-                />
-              ) : (
-                <div
-                  className="absolute inset-0 transition-transform duration-700 group-hover:scale-105"
-                  style={{
-                    background: i === 1
-                      ? "linear-gradient(135deg, #16242c 0%, #2a4751 60%, #4a7c85 100%)"
-                      : "linear-gradient(160deg, #0c1419 0%, #16242c 50%, #c8b27f 140%)",
-                  }}
-                />
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/30 to-transparent" />
-
-              {/* Play badge */}
-              <div className="absolute top-5 right-5 size-12 rounded-full border border-cream/30 backdrop-blur-sm flex items-center justify-center group-hover:bg-cream group-hover:border-cream transition">
-                <Play className="size-4 fill-cream text-cream group-hover:fill-ink group-hover:text-ink transition" />
-              </div>
-
-              {/* Meta */}
-              <div className="absolute inset-x-0 bottom-0 p-6">
-                <p className="text-[10px] uppercase tracking-[0.4em] text-cream-dim">
-                  {v.year} · {v.duration}
-                </p>
-                <h3 className="mt-2 font-display lowercase text-cream text-3xl font-medium">
-                  {v.title}
-                </h3>
-              </div>
-            </a>
-          ))}
+          {videos.map((v, i) => {
+            const thumb = v.thumbnail_url ?? (i === 0 ? fallbackImg : null);
+            return (
+              <a key={v.title + i} href={v.video_url ?? "#"} target={v.video_url?.startsWith("http") ? "_blank" : undefined}
+                 className="group relative aspect-[4/5] overflow-hidden rounded-sm bg-steel">
+                {thumb ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={thumb} alt={v.title} className="absolute inset-0 size-full object-cover opacity-80 transition-all duration-700 group-hover:scale-105 group-hover:opacity-100" />
+                ) : (
+                  <div
+                    className="absolute inset-0 transition-transform duration-700 group-hover:scale-105"
+                    style={{ background: i === 1
+                        ? "linear-gradient(135deg, #16242c 0%, #2a4751 60%, #4a7c85 100%)"
+                        : "linear-gradient(160deg, #0c1419 0%, #16242c 50%, #c8b27f 140%)" }}
+                  />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/30 to-transparent" />
+                <div className="absolute top-5 right-5 size-12 rounded-full border border-cream/30 backdrop-blur-sm flex items-center justify-center group-hover:bg-cream group-hover:border-cream transition">
+                  <Play className="size-4 fill-cream text-cream group-hover:fill-ink group-hover:text-ink transition" />
+                </div>
+                <div className="absolute inset-x-0 bottom-0 p-6">
+                  <p className="text-[10px] uppercase tracking-[0.4em] text-cream-dim">
+                    {v.year ?? "—"} · {v.duration ?? "—"}
+                  </p>
+                  <h3 className="mt-2 font-display lowercase text-cream text-3xl font-medium">
+                    {v.title}
+                  </h3>
+                </div>
+              </a>
+            );
+          })}
         </div>
       </div>
     </section>
@@ -275,7 +287,7 @@ function Videos() {
 }
 
 /* ---------- TOUR ---------- */
-function Tour() {
+function Tour({ rows }: { rows: TourDate[] }) {
   return (
     <section id="tour" className="relative grain bg-midnight py-28 sm:py-40 overflow-hidden">
       <div className="halo animate-drift" style={{ width: 600, height: 600, right: "-10%", top: "30%", background: "radial-gradient(circle, rgba(74,124,133,0.2), transparent 60%)" }} />
@@ -289,20 +301,15 @@ function Tour() {
         </div>
 
         <ul className="mt-16 divide-y divide-white/10 border-y border-white/10">
-          {TOUR.map((show) => (
-            <li key={show.date + show.city} className="group">
-              <a href="#" className="grid grid-cols-12 gap-4 items-center py-6 px-2 hover:bg-cream/5 transition">
-                <span className="col-span-3 sm:col-span-2 font-display text-cream text-xl tracking-wide">
-                  {show.date}
-                </span>
-                <span className="col-span-5 sm:col-span-4 font-display lowercase text-cream text-2xl sm:text-3xl">
-                  {show.city}
-                </span>
-                <span className="col-span-3 hidden sm:block text-cream-dim text-sm">
-                  {show.venue}
-                </span>
+          {rows.map((show, i) => (
+            <li key={show.show_date + show.city + i} className="group">
+              <a href={show.ticket_url ?? "#"} target={show.ticket_url?.startsWith("http") ? "_blank" : undefined}
+                 className="grid grid-cols-12 gap-4 items-center py-6 px-2 hover:bg-cream/5 transition">
+                <span className="col-span-3 sm:col-span-2 font-display text-cream text-xl tracking-wide">{show.show_date}</span>
+                <span className="col-span-5 sm:col-span-4 font-display lowercase text-cream text-2xl sm:text-3xl">{show.city}</span>
+                <span className="col-span-3 hidden sm:block text-cream-dim text-sm">{show.venue ?? "—"}</span>
                 <span className="col-span-1 hidden sm:flex items-center gap-1 text-xs uppercase tracking-[0.3em] text-cream-dim">
-                  <MapPin className="size-3" /> {show.country}
+                  <MapPin className="size-3" /> {show.country ?? ""}
                 </span>
                 <span className="col-span-4 sm:col-span-2 flex justify-end items-center gap-2 text-xs uppercase tracking-[0.2em] text-cream-dim group-hover:text-cream transition">
                   tickets
@@ -322,7 +329,8 @@ function Tour() {
 }
 
 /* ---------- ABOUT ---------- */
-function About() {
+function About({ content }: { content: SiteContent }) {
+  const portrait = content.about.portrait_url ?? "/images/noah-hero.jpeg";
   return (
     <section id="about" className="relative bg-ink py-28 sm:py-40">
       <div className="mx-auto max-w-7xl px-6 sm:px-10">
@@ -330,39 +338,21 @@ function About() {
 
         <div className="mt-16 grid gap-12 lg:grid-cols-12 lg:gap-20 items-start">
           <div className="lg:col-span-5 relative aspect-[4/5] overflow-hidden rounded-sm">
-            <Image
-              src={HERO_IMG}
-              alt="Noah Hill portrait"
-              fill
-              sizes="(min-width: 1024px) 40vw, 90vw"
-              className="object-cover"
-            />
+            <Image src={portrait} alt="Noah Hill portrait" fill sizes="(min-width: 1024px) 40vw, 90vw" className="object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-ink/40 to-transparent" />
           </div>
 
           <div className="lg:col-span-7 lg:pt-8">
             <h2 className="font-display lowercase font-semibold leading-[0.95] text-cream"
                 style={{ fontSize: "clamp(2.5rem, 5vw, 4.5rem)" }}>
-              quiet songs <br/>for loud nights.
+              {content.about.tagline_line1} <br/>{content.about.tagline_line2}
             </h2>
             <div className="mt-10 space-y-6 text-cream-dim leading-relaxed max-w-xl">
-              <p>
-                Noah Hill writes the kind of songs that sit inside a room with you — close,
-                unhurried, and honest. Self-taught on a borrowed guitar at fourteen, he started
-                uploading bedroom demos at sixteen and built a quiet but devoted following one
-                listener at a time.
-              </p>
-              <p>
-                His debut single <em className="text-cream not-italic">"hurt somebody"</em> was
-                produced between Tel Aviv and London, and arrived as a meditation on the small
-                cruelties we don't talk about. A debut EP follows later this year.
-              </p>
+              {content.about.bio.map((p, i) => <p key={i}>{p}</p>)}
             </div>
 
             <dl className="mt-12 grid grid-cols-3 gap-6 max-w-xl">
-              <Stat k="2.4M" v="monthly listeners" />
-              <Stat k="12" v="cities · 2026" />
-              <Stat k="08" v="songs · debut EP" />
+              {content.about.stats.map((s, i) => <Stat key={i} k={s.value} v={s.label} />)}
             </dl>
           </div>
         </div>
@@ -381,38 +371,29 @@ function Stat({ k, v }: { k: string; v: string }) {
 }
 
 /* ---------- NEWSLETTER ---------- */
-function Newsletter() {
+function Newsletter({ content }: { content: SiteContent }) {
   return (
     <section className="relative grain bg-midnight py-28 sm:py-32 overflow-hidden">
       <div className="halo animate-drift-slow" style={{ width: 700, height: 700, left: "50%", top: "-20%", transform: "translateX(-50%)", background: "radial-gradient(circle, rgba(74,124,133,0.35), transparent 60%)" }} />
       <div className="relative mx-auto max-w-3xl px-6 sm:px-10 text-center">
-        <p className="text-xs uppercase tracking-[0.4em] text-cream-dim">stay close</p>
+        <p className="text-xs uppercase tracking-[0.4em] text-cream-dim">{content.newsletter.eyebrow}</p>
         <h2 className="mt-4 font-display lowercase font-semibold leading-[0.95] text-cream"
             style={{ fontSize: "clamp(2.5rem, 6vw, 5rem)" }}>
-          new music. early.
+          {content.newsletter.heading}
         </h2>
         <p className="mt-6 text-cream-dim max-w-md mx-auto">
-          Pre-saves, unreleased demos, ticket pre-sales — sent rarely, never spammy.
+          {content.newsletter.copy}
         </p>
 
         <form suppressHydrationWarning className="mt-10 mx-auto flex max-w-md flex-col sm:flex-row gap-3">
           <label className="sr-only" htmlFor="email">Email</label>
           <div className="relative flex-1">
             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-cream-dim" />
-            <input
-              suppressHydrationWarning
-              id="email"
-              type="email"
-              required
-              placeholder="your email address"
-              className="w-full rounded-full border border-cream/20 bg-steel/40 pl-11 pr-4 py-3.5 text-sm text-cream placeholder:text-cream-dim/70 focus:border-cream/60 focus:outline-none"
-            />
+            <input suppressHydrationWarning id="email" type="email" required placeholder="your email address"
+              className="w-full rounded-full border border-cream/20 bg-steel/40 pl-11 pr-4 py-3.5 text-sm text-cream placeholder:text-cream-dim/70 focus:border-cream/60 focus:outline-none" />
           </div>
-          <button
-            suppressHydrationWarning
-            type="submit"
-            className="rounded-full bg-cream px-7 py-3.5 text-sm font-medium uppercase tracking-[0.2em] text-ink hover:bg-gold transition"
-          >
+          <button suppressHydrationWarning type="submit"
+            className="rounded-full bg-cream px-7 py-3.5 text-sm font-medium uppercase tracking-[0.2em] text-ink hover:bg-gold transition">
             subscribe
           </button>
         </form>
@@ -422,7 +403,17 @@ function Newsletter() {
 }
 
 /* ---------- FOOTER ---------- */
-function Footer() {
+const SOCIAL_ICONS: Record<string, React.FC<React.SVGProps<SVGSVGElement>>> = {
+  instagram: InstagramIcon,
+  youtube:   YoutubeIcon,
+  tiktok:    TiktokIcon,
+  spotify:   SpotifyIcon,
+  apple:     AppleIcon,
+  "apple music": AppleIcon,
+  amazon:    AmazonIcon,
+};
+
+function Footer({ content }: { content: SiteContent }) {
   return (
     <footer className="bg-ink border-t border-white/5">
       <div className="mx-auto max-w-7xl px-6 sm:px-10 py-16">
@@ -435,16 +426,19 @@ function Footer() {
           </div>
 
           <ul className="flex md:justify-center items-center gap-5">
-            <SocialLink href="#" label="Instagram"><InstagramIcon className="size-4" /></SocialLink>
-            <SocialLink href="#" label="YouTube"><YoutubeIcon className="size-4" /></SocialLink>
-            <SocialLink href="#" label="TikTok"><TiktokIcon className="size-4" /></SocialLink>
-            <SocialLink href="#" label="Spotify"><SpotifyIcon className="size-4" /></SocialLink>
-            <SocialLink href="#" label="Apple Music"><AppleIcon className="size-4" /></SocialLink>
+            {content.footer.socials.map(({ name, url }) => {
+              const Icon = SOCIAL_ICONS[name.trim().toLowerCase()] ?? InstagramIcon;
+              return (
+                <SocialLink key={name} href={url || "#"} label={name}>
+                  <Icon className="size-4" />
+                </SocialLink>
+              );
+            })}
           </ul>
 
           <div className="md:text-right text-xs text-cream-dim space-y-2">
-            <p><a href="mailto:management@noahhillmusic.com" className="hover:text-cream transition">management@noahhillmusic.com</a></p>
-            <p><a href="mailto:press@noahhillmusic.com" className="hover:text-cream transition">press@noahhillmusic.com</a></p>
+            <p><a href={`mailto:${content.footer.management_email}`} className="hover:text-cream transition">{content.footer.management_email}</a></p>
+            <p><a href={`mailto:${content.footer.press_email}`} className="hover:text-cream transition">{content.footer.press_email}</a></p>
           </div>
         </div>
 
@@ -462,18 +456,14 @@ function Footer() {
 function SocialLink({ href, label, children }: { href: string; label: string; children: React.ReactNode }) {
   return (
     <li>
-      <a
-        href={href}
-        aria-label={label}
-        className="flex size-10 items-center justify-center rounded-full border border-cream/15 text-cream-dim hover:border-cream/50 hover:text-cream transition"
-      >
+      <a href={href} aria-label={label} target={href.startsWith("http") ? "_blank" : undefined}
+        className="flex size-10 items-center justify-center rounded-full border border-cream/15 text-cream-dim hover:border-cream/50 hover:text-cream transition">
         {children}
       </a>
     </li>
   );
 }
 
-/* ---------- SECTION LABEL ---------- */
 function SectionLabel({ index, title }: { index: string; title: string }) {
   return (
     <div className="flex items-center gap-6">
@@ -484,7 +474,7 @@ function SectionLabel({ index, title }: { index: string; title: string }) {
   );
 }
 
-/* ---------- INLINE BRAND ICONS (lucide doesn't ship these) ---------- */
+/* ---------- INLINE BRAND ICONS ---------- */
 function SpotifyIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
