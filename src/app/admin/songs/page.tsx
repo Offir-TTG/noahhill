@@ -7,7 +7,7 @@ export default async function AdminSongsPage() {
   const supabase = await createClient();
   const { data: songs, error } = await supabase
     .from("songs")
-    .select("id, title, year, duration, audio_url, sort_order")
+    .select("id, title, year, duration, audio_url, cover_url, sort_order")
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
 

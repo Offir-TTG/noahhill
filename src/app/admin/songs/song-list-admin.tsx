@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Pencil, Trash2, Play, Plus } from "lucide-react";
+import { Pencil, Trash2, Play, Plus, Disc3 } from "lucide-react";
 import SongForm from "./song-form";
 import { deleteSong } from "./actions";
 import { useToast } from "@/components/toast";
@@ -13,6 +13,7 @@ type Song = {
   year: string | null;
   duration: string | null;
   audio_url: string | null;
+  cover_url: string | null;
   sort_order: number;
 };
 
@@ -77,7 +78,17 @@ export default function SongListAdmin({ songs }: { songs: Song[] }) {
                 ) : (
                   <div className="grid grid-cols-12 gap-3 items-center px-4 py-4 hover:bg-cream/5 transition">
                     <span className="col-span-1 font-display text-cream-dim text-sm">{(song.sort_order ?? 0).toString().padStart(2, "0")}</span>
-                    <span className="col-span-5 sm:col-span-4 font-display lowercase text-cream text-xl">{song.title}</span>
+                    <div className="col-span-1 size-10 rounded-sm bg-ink/40 border border-cream/10 overflow-hidden shrink-0">
+                      {song.cover_url ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src={song.cover_url} alt="" className="size-full object-cover" />
+                      ) : (
+                        <div className="flex items-center justify-center size-full text-cream-dim/60">
+                          <Disc3 className="size-4" />
+                        </div>
+                      )}
+                    </div>
+                    <span className="col-span-4 sm:col-span-3 font-display lowercase text-cream text-xl truncate">{song.title}</span>
                     <span className="col-span-2 hidden sm:block text-xs text-cream-dim">{song.year ?? "—"}</span>
                     <span className="col-span-2 hidden sm:block text-xs text-cream-dim">{song.duration ?? "—"}</span>
                     <div className="col-span-6 sm:col-span-3 flex justify-end items-center gap-1">

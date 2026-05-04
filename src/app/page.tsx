@@ -9,7 +9,7 @@ import { mergeContent, type SiteContent } from "@/lib/site-content";
 
 export const dynamic = "force-dynamic";
 
-type Song = { id?: string; title: string; year?: string | null; duration?: string | null; audio_url?: string | null };
+type Song = { id?: string; title: string; year?: string | null; duration?: string | null; audio_url?: string | null; cover_url?: string | null };
 type Video = { title: string; year: string | null; duration: string | null; thumbnail_url: string | null; video_url: string | null };
 type TourDate = { show_date: string; city: string; venue: string | null; country: string | null; ticket_url: string | null };
 
@@ -61,11 +61,14 @@ async function loadAll() {
 
 export default async function Home() {
   const { content, songs, videos, tour } = await loadAll();
+  // Fall back to the single's cover art so the vinyl always has something to show.
+  const fallbackCover = content.single.cover_url ?? content.hero.photo_url ?? null;
   const songsForList = songs.map((s) => ({
     title: s.title,
     year: s.year ?? "",
     duration: s.duration ?? "",
     audio: s.audio_url ?? "",
+    cover: s.cover_url ?? fallbackCover,
   })).filter((s) => s.audio);
 
   return (
@@ -226,7 +229,7 @@ function LatestRelease({ content }: { content: SiteContent }) {
 }
 
 /* ---------- DISCOGRAPHY ---------- */
-function Discography({ songs }: { songs: { title: string; year: string; duration: string; audio: string }[] }) {
+function Discography({ songs }: { songs: { title: string; year: string; duration: string; audio: string; cover?: string | null }[] }) {
   if (songs.length === 0) return null;
   return (
     <section id="songs" className="relative bg-ink py-28 sm:py-40">
