@@ -162,18 +162,18 @@ export default function TourListAdmin({ rows }: { rows: TourDate[] }) {
                     <span className="hidden sm:block sm:col-span-1 text-[11px] uppercase tracking-[0.2em] text-cream-dim">{row.country ?? ""}</span>
                     <div className="col-span-4 sm:col-span-3 flex justify-end items-center gap-1">
                       {row.ticket_url && (
-                        <a href={row.ticket_url} target="_blank" className="size-8 inline-flex items-center justify-center rounded-sm text-cream-dim hover:bg-cream/10 hover:text-cream transition" title="Tickets">
+                        <a href={row.ticket_url} target="_blank" className="size-10 sm:size-8 inline-flex items-center justify-center rounded-sm text-cream-dim hover:bg-cream/10 hover:text-cream transition" title="Tickets">
                           <ExternalLink className="size-3.5" />
                         </a>
                       )}
-                      <button type="button" onClick={() => setEditing(row)} className="size-8 inline-flex items-center justify-center rounded-sm text-cream-dim hover:bg-cream/10 hover:text-cream transition" title="Edit">
+                      <button type="button" onClick={() => setEditing(row)} className="size-10 sm:size-8 inline-flex items-center justify-center rounded-sm text-cream-dim hover:bg-cream/10 hover:text-cream transition" title="Edit">
                         <Pencil className="size-3.5" />
                       </button>
                       <button
                         type="button"
                         disabled={deleting === row.id}
                         onClick={() => onDelete(row.id, row.city, row.show_date)}
-                        className="size-8 inline-flex items-center justify-center rounded-sm text-cream-dim hover:bg-red-500/15 hover:text-red-300 transition disabled:opacity-50"
+                        className="size-10 sm:size-8 inline-flex items-center justify-center rounded-sm text-cream-dim hover:bg-red-500/15 hover:text-red-300 transition disabled:opacity-50"
                         title="Delete"
                       >
                         <Trash2 className="size-3.5" />

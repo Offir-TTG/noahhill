@@ -34,7 +34,7 @@ export default function SectionsEditor({ initial }: { initial: SiteContent }) {
   return (
     <div className="space-y-12">
       {/* Save bar */}
-      <div className="sticky top-0 z-20 -mx-6 sm:-mx-10 px-6 sm:px-10 py-3 bg-ink/85 backdrop-blur border-b border-white/5 flex items-center justify-between gap-4">
+      <div className="sticky top-16 md:top-0 z-20 -mx-4 sm:-mx-10 px-4 sm:px-10 py-3 bg-ink/85 backdrop-blur border-b border-white/5 flex items-center justify-between gap-4">
         <div className="text-xs text-cream-dim">
           {savedAt && <span className="text-cream">saved.</span>}
           {error && <span className="text-red-300">{error}</span>}

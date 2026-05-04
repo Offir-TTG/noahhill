@@ -126,7 +126,7 @@ export default function SubscribersListAdmin({ rows }: { rows: Subscriber[] }) {
                   type="button"
                   onClick={() => onDelete(row.id, row.email)}
                   disabled={deletingId === row.id}
-                  className="size-8 inline-flex items-center justify-center rounded-sm text-cream-dim hover:bg-red-500/15 hover:text-red-300 transition disabled:opacity-50"
+                  className="size-10 sm:size-8 inline-flex items-center justify-center rounded-sm text-cream-dim hover:bg-red-500/15 hover:text-red-300 transition disabled:opacity-50"
                   title="Remove"
                 >
                   <Trash2 className="size-3.5" />

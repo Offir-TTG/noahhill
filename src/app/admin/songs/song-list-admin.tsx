@@ -85,7 +85,7 @@ export default function SongListAdmin({ songs }: { songs: Song[] }) {
                         <a
                           href={song.audio_url}
                           target="_blank"
-                          className="size-8 inline-flex items-center justify-center rounded-sm text-cream-dim hover:bg-cream/10 hover:text-cream transition"
+                          className="size-10 sm:size-8 inline-flex items-center justify-center rounded-sm text-cream-dim hover:bg-cream/10 hover:text-cream transition"
                           title="Preview"
                         >
                           <Play className="size-3.5" />
@@ -94,7 +94,7 @@ export default function SongListAdmin({ songs }: { songs: Song[] }) {
                       <button
                         type="button"
                         onClick={() => setEditing(song)}
-                        className="size-8 inline-flex items-center justify-center rounded-sm text-cream-dim hover:bg-cream/10 hover:text-cream transition"
+                        className="size-10 sm:size-8 inline-flex items-center justify-center rounded-sm text-cream-dim hover:bg-cream/10 hover:text-cream transition"
                         title="Edit"
                       >
                         <Pencil className="size-3.5" />
@@ -103,7 +103,7 @@ export default function SongListAdmin({ songs }: { songs: Song[] }) {
                         type="button"
                         disabled={deleting === song.id}
                         onClick={() => onDelete(song.id, song.title)}
-                        className="size-8 inline-flex items-center justify-center rounded-sm text-cream-dim hover:bg-red-500/15 hover:text-red-300 transition disabled:opacity-50"
+                        className="size-10 sm:size-8 inline-flex items-center justify-center rounded-sm text-cream-dim hover:bg-red-500/15 hover:text-red-300 transition disabled:opacity-50"
                         title="Delete"
                       >
                         <Trash2 className="size-3.5" />

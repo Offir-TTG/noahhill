@@ -229,7 +229,7 @@ export default function CampaignComposer({ initial }: { initial: Campaign }) {
       )}
 
       {/* Subject + preheader */}
-      <div className="rounded-sm border border-white/10 bg-steel/30 p-6 space-y-4">
+      <div className="rounded-sm border border-white/10 bg-steel/30 p-4 sm:p-6 space-y-4">
         <Field
           label="subject"
           value={subject}
@@ -249,8 +249,8 @@ export default function CampaignComposer({ initial }: { initial: Campaign }) {
 
       {/* Editor / Preview */}
       <div className="rounded-sm border border-white/10 bg-steel/30">
-        {/* Tabs + toolbar */}
-        <div className="flex items-center justify-between border-b border-white/10 p-2 gap-2 flex-wrap">
+        {/* Tabs row */}
+        <div className="flex items-center justify-between border-b border-white/10 p-2 gap-2">
           <div className="flex items-center gap-1">
             <TabButton active={tab === "edit"}    onClick={() => setTab("edit")}>
               <FileText className="size-3.5" /> edit
@@ -259,20 +259,24 @@ export default function CampaignComposer({ initial }: { initial: Campaign }) {
               <Eye className="size-3.5" /> preview
             </TabButton>
           </div>
-          {tab === "edit" && !isLocked && (
-            <div className="flex items-center gap-1">
-              <ToolbarButton onClick={() => wrapSelection("**", "**", "bold")}      title="Bold (Cmd+B)"><Bold className="size-3.5" /></ToolbarButton>
-              <ToolbarButton onClick={() => wrapSelection("_",  "_",  "italic")}    title="Italic (Cmd+I)"><Italic className="size-3.5" /></ToolbarButton>
-              <ToolbarButton onClick={() => insertAtCursor("\n# heading\n")}        title="Heading 1"><Heading1 className="size-3.5" /></ToolbarButton>
-              <ToolbarButton onClick={() => insertAtCursor("\n## heading\n")}       title="Heading 2"><Heading2 className="size-3.5" /></ToolbarButton>
-              <ToolbarButton onClick={insertLink}                                   title="Link"><LinkIcon className="size-3.5" /></ToolbarButton>
-              <ToolbarButton onClick={insertImage}                                  title="Image"><ImageIcon className="size-3.5" /></ToolbarButton>
-              <ToolbarButton onClick={() => insertAtCursor("\n- item\n- item\n")}   title="Bulleted list"><List className="size-3.5" /></ToolbarButton>
-              <ToolbarButton onClick={() => insertAtCursor("\n> quote\n")}          title="Quote"><Quote className="size-3.5" /></ToolbarButton>
+        </div>
+
+        {/* Toolbar — its own row so on mobile it can scroll horizontally without crowding the tabs */}
+        {tab === "edit" && !isLocked && (
+          <div className="border-b border-white/10 px-2 py-1.5 overflow-x-auto no-scrollbar">
+            <div className="flex items-center gap-1 w-max">
+              <ToolbarButton onClick={() => wrapSelection("**", "**", "bold")}      title="Bold (Cmd+B)"><Bold className="size-4" /></ToolbarButton>
+              <ToolbarButton onClick={() => wrapSelection("_",  "_",  "italic")}    title="Italic (Cmd+I)"><Italic className="size-4" /></ToolbarButton>
+              <ToolbarButton onClick={() => insertAtCursor("\n# heading\n")}        title="Heading 1"><Heading1 className="size-4" /></ToolbarButton>
+              <ToolbarButton onClick={() => insertAtCursor("\n## heading\n")}       title="Heading 2"><Heading2 className="size-4" /></ToolbarButton>
+              <ToolbarButton onClick={insertLink}                                   title="Link"><LinkIcon className="size-4" /></ToolbarButton>
+              <ToolbarButton onClick={insertImage}                                  title="Image"><ImageIcon className="size-4" /></ToolbarButton>
+              <ToolbarButton onClick={() => insertAtCursor("\n- item\n- item\n")}   title="Bulleted list"><List className="size-4" /></ToolbarButton>
+              <ToolbarButton onClick={() => insertAtCursor("\n> quote\n")}          title="Quote"><Quote className="size-4" /></ToolbarButton>
               <input type="file" ref={fileInputRef} accept="image/*" hidden onChange={handleImageFile} />
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {tab === "edit" ? (
           <textarea
@@ -281,26 +285,26 @@ export default function CampaignComposer({ initial }: { initial: Campaign }) {
             onChange={(e) => setBody(e.target.value)}
             disabled={isLocked}
             placeholder="hey,&#10;&#10;quick note — the new single is out. hit reply if you&apos;re feeling it.&#10;&#10;listen here: …"
-            className="block w-full min-h-[420px] bg-transparent px-6 py-5 text-sm text-cream placeholder:text-cream-dim/60 focus:outline-none resize-y font-mono leading-relaxed disabled:opacity-60"
+            className="block w-full min-h-[420px] bg-transparent px-4 sm:px-6 py-5 text-sm text-cream placeholder:text-cream-dim/60 focus:outline-none resize-y font-mono leading-relaxed disabled:opacity-60"
             onKeyDown={(e) => {
               if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "b") { e.preventDefault(); wrapSelection("**", "**", "bold"); }
               if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "i") { e.preventDefault(); wrapSelection("_",  "_",  "italic"); }
             }}
           />
         ) : (
-          <div className="px-6 py-6">
+          <div className="p-4 sm:p-6">
             <div className="mx-auto max-w-2xl rounded-sm border border-white/10 bg-midnight overflow-hidden">
               {/* Subject preview */}
-              <div className="px-6 py-4 border-b border-white/10">
+              <div className="px-4 sm:px-6 py-4 border-b border-white/10">
                 <p className="text-xs uppercase tracking-[0.3em] text-cream-dim">noah hill · subject</p>
                 <p className="mt-2 text-cream font-display text-xl">{subject || "(no subject)"}</p>
                 {preheader && <p className="mt-1 text-xs text-cream-dim">{preheader}</p>}
               </div>
               <div
-                className="prose-email px-6 py-6 text-sm text-cream leading-relaxed"
+                className="prose-email px-4 sm:px-6 py-6 text-sm text-cream leading-relaxed"
                 dangerouslySetInnerHTML={{ __html: previewHtml }}
               />
-              <div className="px-6 py-4 border-t border-white/10 text-[11px] text-cream-dim">
+              <div className="px-4 sm:px-6 py-4 border-t border-white/10 text-[11px] text-cream-dim">
                 <p>you&apos;re receiving this because you signed up at noahhillmusic.com.</p>
                 <p className="mt-1"><span className="underline">unsubscribe</span> · noah hill</p>
               </div>
@@ -311,7 +315,7 @@ export default function CampaignComposer({ initial }: { initial: Campaign }) {
 
       {/* Actions */}
       {!isLocked && (
-        <div className="flex flex-wrap gap-2 sticky bottom-0 -mx-6 sm:-mx-10 px-6 sm:px-10 py-3 bg-ink/85 backdrop-blur border-t border-white/5 z-20">
+        <div className="flex flex-wrap gap-2 sticky bottom-0 -mx-4 sm:-mx-10 px-4 sm:px-10 py-3 bg-ink/85 backdrop-blur border-t border-white/5 z-20">
           <button
             type="button"
             onClick={save}
@@ -391,7 +395,7 @@ function ToolbarButton({ onClick, title, children }: { onClick: () => void; titl
       type="button"
       onClick={onClick}
       title={title}
-      className="size-8 inline-flex items-center justify-center rounded-sm text-cream-dim hover:bg-cream/10 hover:text-cream transition"
+      className="size-10 sm:size-8 inline-flex items-center justify-center rounded-sm text-cream-dim hover:bg-cream/10 hover:text-cream transition shrink-0"
     >
       {children}
     </button>

@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { signOut } from "./login/actions";
 import { LayoutGrid, Music, MapPin, Film, FileText, LogOut, ExternalLink, Users, Mail, Plug } from "lucide-react";
 import type { ReactNode } from "react";
+import AdminMobileNav from "./admin-mobile-nav";
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const supabase = await createClient();
@@ -26,9 +27,6 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   const settingsLinks = [
     { href: "/admin/connections", label: "connections", icon: Plug },
   ];
-
-  // Flat list for the mobile horizontal scroller
-  const allLinks = [...mainLinks, ...settingsLinks];
 
   return (
     <div className="min-h-screen bg-ink text-cream md:flex">
@@ -96,30 +94,17 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         </div>
       </aside>
 
-      {/* Mobile topbar */}
+      {/* Mobile topbar with hamburger drawer */}
       <header className="md:hidden fixed inset-x-0 top-0 z-40 flex items-center justify-between bg-midnight border-b border-white/5 px-4 py-3">
-        <Link href="/admin" className="font-display lowercase text-cream text-lg">noah hill <span className="text-[10px] uppercase tracking-[0.3em] text-cream-dim ml-1 align-middle">admin</span></Link>
-        <form action={signOut}>
-          <button type="submit" className="text-[11px] uppercase tracking-[0.2em] text-cream-dim hover:text-cream transition">sign out</button>
-        </form>
+        <Link href="/admin" className="font-display lowercase text-cream text-lg">
+          noah hill <span className="text-[10px] uppercase tracking-[0.3em] text-cream-dim ml-1 align-middle">admin</span>
+        </Link>
+        <AdminMobileNav mainLinks={mainLinks} settingsLinks={settingsLinks} userEmail={user.email} />
       </header>
 
       {/* Main — offset on desktop to clear the fixed sidebar */}
-      <main className="flex-1 min-w-0 pt-14 md:pt-0 md:ml-64">
-        {/* Mobile section nav */}
-        <nav className="md:hidden flex gap-1 overflow-x-auto no-scrollbar px-3 py-3 border-b border-white/5 bg-midnight/60 backdrop-blur sticky top-14 z-30">
-          {allLinks.map(({ href, label }) => (
-            <Link
-              key={href}
-              href={href}
-              className="shrink-0 px-3 py-1.5 rounded-sm text-[11px] uppercase tracking-[0.2em] text-cream-dim hover:bg-cream/5 hover:text-cream transition"
-            >
-              {label}
-            </Link>
-          ))}
-        </nav>
-
-        <div className="p-6 sm:p-10 max-w-5xl">
+      <main className="flex-1 min-w-0 pt-16 md:pt-0 md:ml-64">
+        <div className="p-4 sm:p-10 max-w-5xl">
           {children}
         </div>
       </main>

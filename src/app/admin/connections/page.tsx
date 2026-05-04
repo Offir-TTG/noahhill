@@ -132,7 +132,7 @@ function Section({
         </span>;
 
   return (
-    <section className="rounded-sm border border-white/10 bg-steel/30 p-6">
+    <section className="rounded-sm border border-white/10 bg-steel/30 p-4 sm:p-6">
       <header className="flex items-start justify-between gap-4 mb-6">
         <div className="flex items-start gap-3">
           <span className="flex size-9 items-center justify-center rounded-sm bg-cream/5 text-cream-dim">

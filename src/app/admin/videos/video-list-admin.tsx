@@ -189,8 +189,8 @@ export default function VideoListAdmin({ rows }: { rows: Video[] }) {
                     </p>
                   </div>
                   <div className="flex gap-1 shrink-0">
-                    <button onClick={() => setEditing(row)} className="size-8 inline-flex items-center justify-center rounded-sm text-cream-dim hover:bg-cream/10 hover:text-cream transition" title="Edit"><Pencil className="size-3.5" /></button>
-                    <button onClick={() => onDelete(row.id, row.title)} disabled={deleting === row.id} className="size-8 inline-flex items-center justify-center rounded-sm text-cream-dim hover:bg-red-500/15 hover:text-red-300 transition disabled:opacity-50" title="Delete"><Trash2 className="size-3.5" /></button>
+                    <button onClick={() => setEditing(row)} className="size-10 sm:size-8 inline-flex items-center justify-center rounded-sm text-cream-dim hover:bg-cream/10 hover:text-cream transition" title="Edit"><Pencil className="size-3.5" /></button>
+                    <button onClick={() => onDelete(row.id, row.title)} disabled={deleting === row.id} className="size-10 sm:size-8 inline-flex items-center justify-center rounded-sm text-cream-dim hover:bg-red-500/15 hover:text-red-300 transition disabled:opacity-50" title="Delete"><Trash2 className="size-3.5" /></button>
                   </div>
                 </div>
               </li>
