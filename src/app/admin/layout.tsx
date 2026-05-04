@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "./login/actions";
-import { LayoutGrid, Music, MapPin, Film, FileText, LogOut, ExternalLink, Users, Mail, Plug } from "lucide-react";
+import { LogOut, ExternalLink } from "lucide-react";
 import type { ReactNode } from "react";
 import AdminMobileNav from "./admin-mobile-nav";
+import { MAIN_LINKS, SETTINGS_LINKS } from "./admin-links";
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const supabase = await createClient();
@@ -11,22 +12,6 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
   // Login page is rendered without the chrome — middleware lets it through unauthenticated.
   if (!user) return <>{children}</>;
-
-  // Top-level links
-  const mainLinks = [
-    { href: "/admin",             label: "dashboard",   icon: LayoutGrid },
-    { href: "/admin/sections",    label: "sections",    icon: FileText  },
-    { href: "/admin/songs",       label: "songs",       icon: Music     },
-    { href: "/admin/videos",      label: "visuals",     icon: Film      },
-    { href: "/admin/tour",        label: "tour",        icon: MapPin    },
-    { href: "/admin/subscribers", label: "subscribers", icon: Users     },
-    { href: "/admin/messaging",   label: "messaging",   icon: Mail      },
-  ];
-
-  // Settings group
-  const settingsLinks = [
-    { href: "/admin/connections", label: "connections", icon: Plug },
-  ];
 
   return (
     <div className="min-h-screen bg-ink text-cream md:flex">
@@ -40,7 +25,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         {/* Scrollable nav area in case the link list overflows */}
         <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-4">
           <ul className="space-y-1">
-            {mainLinks.map(({ href, label, icon: Icon }) => (
+            {MAIN_LINKS.map(({ href, label, icon: Icon }) => (
               <li key={href}>
                 <Link
                   href={href}
@@ -57,7 +42,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           <div>
             <p className="px-3 mb-2 text-[10px] uppercase tracking-[0.3em] text-cream-dim/60">settings</p>
             <ul className="space-y-1">
-              {settingsLinks.map(({ href, label, icon: Icon }) => (
+              {SETTINGS_LINKS.map(({ href, label, icon: Icon }) => (
                 <li key={href}>
                   <Link
                     href={href}
@@ -99,7 +84,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         <Link href="/admin" className="font-display lowercase text-cream text-lg">
           noah hill <span className="text-[10px] uppercase tracking-[0.3em] text-cream-dim ml-1 align-middle">admin</span>
         </Link>
-        <AdminMobileNav mainLinks={mainLinks} settingsLinks={settingsLinks} userEmail={user.email} />
+        <AdminMobileNav userEmail={user.email} />
       </header>
 
       {/* Main — offset on desktop to clear the fixed sidebar */}

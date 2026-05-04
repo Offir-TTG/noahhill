@@ -3,20 +3,16 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Menu, X, ExternalLink, LogOut } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 import { signOut } from "./login/actions";
-
-type LinkSpec = { href: string; label: string; icon: LucideIcon };
+import { MAIN_LINKS, SETTINGS_LINKS, type AdminLink } from "./admin-links";
 
 export default function AdminMobileNav({
-  mainLinks,
-  settingsLinks,
   userEmail,
 }: {
-  mainLinks: LinkSpec[];
-  settingsLinks: LinkSpec[];
   userEmail: string | null | undefined;
 }) {
+  const mainLinks = MAIN_LINKS;
+  const settingsLinks = SETTINGS_LINKS;
   const [open, setOpen] = useState(false);
 
   // Lock body scroll when menu open
@@ -119,7 +115,7 @@ export default function AdminMobileNav({
 function DrawerLink({
   link, index, open, onClick,
 }: {
-  link: LinkSpec;
+  link: AdminLink;
   index: number;
   open: boolean;
   onClick: () => void;
