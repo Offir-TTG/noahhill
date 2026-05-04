@@ -40,6 +40,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      data-scroll-behavior="smooth"
       className={`${display.variable} ${body.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-[var(--ink)] text-[var(--cream)] selection:bg-[var(--cream)] selection:text-[var(--ink)]">

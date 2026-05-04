@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { removeStorageFile } from "@/lib/storage";
 import { revalidatePath } from "next/cache";
 
 const slugify = (s: string) =>
@@ -58,6 +59,13 @@ export async function updateVideo(id: string, formData: FormData) {
 
   if (!title) throw new Error("Title is required.");
 
+  // Capture previous URLs so we can clean up replaced files.
+  const { data: previous } = await supabase
+    .from("videos")
+    .select("thumbnail_url, video_url")
+    .eq("id", id)
+    .maybeSingle();
+
   const updates: Record<string, unknown> = { title, year, duration, sort_order };
   if (thumb && thumb.size > 0) updates.thumbnail_url = await uploadFile("images", thumb);
   if (video && video.size > 0) updates.video_url = await uploadFile("videos", video);
@@ -66,14 +74,34 @@ export async function updateVideo(id: string, formData: FormData) {
   const { error } = await supabase.from("videos").update(updates).eq("id", id);
   if (error) throw new Error(error.message);
 
+  // Drop the orphaned files when they were replaced.
+  if (updates.thumbnail_url && previous?.thumbnail_url && previous.thumbnail_url !== updates.thumbnail_url) {
+    await removeStorageFile(previous.thumbnail_url);
+  }
+  if (updates.video_url && previous?.video_url && previous.video_url !== updates.video_url) {
+    await removeStorageFile(previous.video_url);
+  }
+
   revalidatePath("/admin/videos");
   revalidatePath("/");
 }
 
 export async function deleteVideo(id: string) {
   const supabase = await createClient();
+
+  // Read URLs first so we can clean up after the row is gone.
+  const { data: existing } = await supabase
+    .from("videos")
+    .select("thumbnail_url, video_url")
+    .eq("id", id)
+    .maybeSingle();
+
   const { error } = await supabase.from("videos").delete().eq("id", id);
   if (error) throw new Error(error.message);
+
+  await removeStorageFile(existing?.thumbnail_url);
+  await removeStorageFile(existing?.video_url);
+
   revalidatePath("/admin/videos");
   revalidatePath("/");
 }

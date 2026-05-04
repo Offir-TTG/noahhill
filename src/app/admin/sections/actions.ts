@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { removeStorageFile } from "@/lib/storage";
 import { revalidatePath } from "next/cache";
 import type { SiteContent } from "@/lib/site-content";
 
@@ -26,8 +27,19 @@ export async function saveSiteContent(
 ) {
   const supabase = await createClient();
 
-  if (uploads.hero   && uploads.hero.size   > 0) content.hero.photo_url    = await uploadImage(uploads.hero);
-  if (uploads.single && uploads.single.size > 0) content.single.cover_url  = await uploadImage(uploads.single);
+  // Capture previous image URLs so we can drop the orphans after a successful save.
+  const { data: previousRow } = await supabase
+    .from("site_content")
+    .select("data")
+    .eq("id", 1)
+    .maybeSingle();
+  const previous = (previousRow?.data ?? {}) as Partial<SiteContent>;
+  const previousHero    = previous.hero?.photo_url    ?? null;
+  const previousSingle  = previous.single?.cover_url  ?? null;
+  const previousAbout   = previous.about?.portrait_url ?? null;
+
+  if (uploads.hero   && uploads.hero.size   > 0) content.hero.photo_url     = await uploadImage(uploads.hero);
+  if (uploads.single && uploads.single.size > 0) content.single.cover_url   = await uploadImage(uploads.single);
   if (uploads.about  && uploads.about.size  > 0) content.about.portrait_url = await uploadImage(uploads.about);
 
   const { error } = await supabase
@@ -35,6 +47,12 @@ export async function saveSiteContent(
     .upsert({ id: 1, data: content }, { onConflict: "id" });
 
   if (error) throw new Error(error.message);
+
+  // Best-effort cleanup of replaced images. Skipped automatically for the
+  // bundled /images/* defaults — those aren't in Supabase Storage.
+  if (previousHero   && previousHero   !== content.hero.photo_url)     await removeStorageFile(previousHero);
+  if (previousSingle && previousSingle !== content.single.cover_url)   await removeStorageFile(previousSingle);
+  if (previousAbout  && previousAbout  !== content.about.portrait_url) await removeStorageFile(previousAbout);
 
   revalidatePath("/");
   revalidatePath("/admin/sections");

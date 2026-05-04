@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getTransporter, fromAddress, verifySmtp } from "@/lib/email/transport";
 import { renderEmail } from "@/lib/email/template";
+import { extractStorageUrlsFromMarkdown, removeStorageFiles } from "@/lib/storage";
 import { revalidatePath } from "next/cache";
 
 const slugify = (s: string) =>
@@ -49,8 +50,22 @@ export async function updateDraft(id: string, formData: FormData) {
 
 export async function deleteCampaign(id: string) {
   const supabase = await createClient();
+
+  // Read the body so we can clean up any images that were uploaded for this campaign.
+  const { data: existing } = await supabase
+    .from("email_campaigns")
+    .select("body_md")
+    .eq("id", id)
+    .maybeSingle();
+
   const { error } = await supabase.from("email_campaigns").delete().eq("id", id);
   if (error) throw new Error(error.message);
+
+  if (existing?.body_md) {
+    const urls = extractStorageUrlsFromMarkdown(existing.body_md);
+    if (urls.length) await removeStorageFiles(urls);
+  }
+
   revalidatePath("/admin/messaging");
 }
 
