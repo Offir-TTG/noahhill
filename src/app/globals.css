@@ -1,26 +1,119 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Palette pulled from "hurt somebody" cover art */
+  --ink: #060a0d;            /* deepest blue-black */
+  --midnight: #0c1419;       /* primary surface */
+  --steel: #16242c;          /* raised surfaces / cards */
+  --teal-shadow: #2a4751;    /* subtle teal glow */
+  --teal-glow: #4a7c85;      /* highlight teal */
+  --cream: #e8d9bd;          /* primary text — warm */
+  --cream-dim: #b5a586;      /* muted text */
+  --gold: #c8b27f;           /* accent / buttons */
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ink: var(--ink);
+  --color-midnight: var(--midnight);
+  --color-steel: var(--steel);
+  --color-teal-shadow: var(--teal-shadow);
+  --color-teal-glow: var(--teal-glow);
+  --color-cream: var(--cream);
+  --color-cream-dim: var(--cream-dim);
+  --color-gold: var(--gold);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+html, body { background: var(--ink); }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body), system-ui, sans-serif;
+  color: var(--cream);
+  font-feature-settings: "ss01", "cv11";
 }
+
+/* Subtle film grain overlay used on dark sections */
+.grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.08;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.6 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+/* Soft drifting teal halo behind hero */
+.halo {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(80px);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+@keyframes drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(2%, -3%, 0) scale(1.08); }
+}
+.animate-drift { animation: drift 18s ease-in-out infinite; }
+
+@keyframes drift-slow {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(-3%, 2%, 0) scale(1.05); }
+}
+.animate-drift-slow { animation: drift-slow 26s ease-in-out infinite; }
+
+/* Wave ripples emanating from play button */
+@keyframes wave-ping {
+  0%   { transform: scale(1);   opacity: 0.7; }
+  100% { transform: scale(2.2); opacity: 0;   }
+}
+.animate-wave-ping   { animation: wave-ping 1.8s cubic-bezier(0.2, 0.6, 0.4, 1) infinite; }
+.animate-wave-ping-2 { animation: wave-ping 1.8s cubic-bezier(0.2, 0.6, 0.4, 1) infinite 0.9s; }
+
+/* Equalizer bars */
+@keyframes eq-bar {
+  0%, 100% { transform: scaleY(0.35); }
+  50%      { transform: scaleY(1);    }
+}
+.animate-eq-bar {
+  transform-origin: bottom;
+  animation: eq-bar 0.9s ease-in-out infinite;
+}
+
+/* Marquee */
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-marquee { animation: marquee 40s linear infinite; }
+
+/* Reveal on load */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-rise { animation: rise 1s cubic-bezier(0.2, 0.7, 0.1, 1) both; }
+
+/* Vertical text helper (rotated label) */
+.vert {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  letter-spacing: 0.4em;
+}
+
+/* Custom focus ring */
+:where(a, button):focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Smooth scroll for in-page nav */
+html { scroll-behavior: smooth; }
+
+/* Hide scrollbar on horizontal strips */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }

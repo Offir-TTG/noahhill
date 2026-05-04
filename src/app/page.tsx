@@ -1,65 +1,531 @@
 import Image from "next/image";
+import { Music2, Mail, Play, ArrowUpRight, MapPin } from "lucide-react";
+import CoverPlayer from "./cover-player";
+import SongList from "./song-list";
+import Nav from "./nav";
+
+const HERO_IMG = "/images/noah-hero.jpeg";
+const COVER_IMG = "/images/noah-hero.jpeg"; // same shot doubles as the cover until artwork is added
+
+const STREAMING = [
+  { name: "Spotify",     href: "#", icon: SpotifyIcon },
+  { name: "Apple Music", href: "#", icon: AppleIcon },
+  { name: "YouTube",     href: "#", icon: YoutubeIcon },
+  { name: "Amazon",      href: "#", icon: AmazonIcon },
+];
+
+const VIDEOS = [
+  { title: "hurt somebody",  year: "2026", duration: "3:42" },
+  { title: "low light",      year: "2025", duration: "4:08" },
+  { title: "out of nowhere", year: "2025", duration: "3:21" },
+];
+
+const SONGS = [
+  { title: "hurt somebody", year: "2026", duration: "3:42", audio: "/music/Hurt Somebody.wav" },
+  { title: "fix me",        year: "2025", duration: "3:18", audio: "/music/Fix Me.wav" },
+];
+
+const TOUR = [
+  { date: "MAY 18", city: "Tel Aviv",   venue: "Barby",                country: "IL" },
+  { date: "JUN 02", city: "Berlin",     venue: "Festsaal Kreuzberg",   country: "DE" },
+  { date: "JUN 06", city: "Amsterdam",  venue: "Paradiso",             country: "NL" },
+  { date: "JUN 11", city: "London",     venue: "Omeara",               country: "UK" },
+  { date: "JUN 14", city: "Paris",      venue: "La Maroquinerie",      country: "FR" },
+  { date: "JUL 02", city: "New York",   venue: "Music Hall of Williamsburg", country: "US" },
+  { date: "JUL 08", city: "Los Angeles",venue: "The Roxy",             country: "US" },
+];
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
+    <>
+      <Nav />
+      <Hero />
+      <Marquee />
+      <LatestRelease />
+      <Discography />
+      <Videos />
+      <Tour />
+      <About />
+      <Newsletter />
+      <Footer />
+    </>
+  );
+}
+
+/* ---------- HERO ---------- */
+function Hero() {
+  return (
+    <section id="top" className="relative grain min-h-screen overflow-hidden">
+      {/* Atmospheric halos */}
+      <div className="halo animate-drift" style={{ width: 720, height: 720, left: "-10%", top: "10%", background: "radial-gradient(circle, rgba(74,124,133,0.55), transparent 60%)" }} />
+      <div className="halo animate-drift-slow" style={{ width: 540, height: 540, right: "-8%", bottom: "-10%", background: "radial-gradient(circle, rgba(200,178,127,0.18), transparent 60%)" }} />
+
+      {/* Hero portrait — full bleed on the right */}
+      <div className="absolute inset-0">
         <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
+          src={HERO_IMG}
+          alt="Noah Hill"
+          fill
           priority
+          sizes="100vw"
+          className="object-cover object-[75%_25%] opacity-90"
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+        {/* Cinematic gradients */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[var(--ink)] via-[var(--ink)]/85 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--ink)] via-transparent to-transparent" />
+      </div>
+
+      {/* Side rail */}
+      <div className="absolute left-6 top-1/2 -translate-y-1/2 hidden lg:flex flex-col items-center gap-6 text-[10px] text-cream-dim">
+        <span className="vert uppercase">est · 2026</span>
+        <span className="h-24 w-px bg-cream-dim/40" />
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10 mx-auto flex min-h-screen max-w-7xl flex-col justify-end px-6 pb-24 pt-40 sm:px-10">
+        <p className="animate-rise text-xs uppercase tracking-[0.5em] text-cream-dim mb-6">
+          new single · hurt somebody · out now
+        </p>
+        <h1 className="animate-rise font-display lowercase font-semibold leading-[0.85] tracking-tight text-cream"
+            style={{ animationDelay: "120ms", fontSize: "clamp(4rem, 14vw, 12rem)" }}>
+          noah
+          <br />
+          hill
+        </h1>
+        <div className="animate-rise mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center" style={{ animationDelay: "260ms" }}>
+          <a
+            href="#music"
+            className="group inline-flex w-full sm:w-auto items-center justify-center gap-3 rounded-full bg-cream px-7 py-4 text-sm font-medium uppercase tracking-[0.2em] text-ink hover:bg-gold transition-colors"
+          >
+            <Play className="size-4 fill-ink" />
+            listen now
+          </a>
+          <a
+            href="#videos"
+            className="group inline-flex w-full sm:w-auto items-center justify-center gap-3 rounded-full border border-cream/40 px-7 py-4 text-sm font-medium uppercase tracking-[0.2em] text-cream hover:border-cream hover:bg-cream/5 transition-colors"
+          >
+            watch video
+            <ArrowUpRight className="size-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          </a>
+        </div>
+
+        {/* Bottom meta strip */}
+        <div className="animate-rise mt-20 flex items-end justify-between text-xs text-cream-dim" style={{ animationDelay: "400ms" }}>
+          <div className="space-y-1">
+            <p className="uppercase tracking-[0.3em]">singer · songwriter · producer</p>
+            <p className="text-cream-dim/70">based in new york</p>
+          </div>
+          <div className="hidden sm:block text-right space-y-1">
+            <p className="uppercase tracking-[0.3em]">scroll</p>
+            <span className="block ml-auto h-10 w-px bg-cream-dim/40" />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------- MARQUEE ---------- */
+function Marquee() {
+  const items = ["hurt somebody", "out now", "noah hill", "new single", "world tour 2026", "hurt somebody", "out now", "noah hill"];
+  return (
+    <div className="border-y border-white/5 bg-midnight overflow-hidden py-6">
+      <div className="flex w-max animate-marquee gap-12 whitespace-nowrap font-display lowercase text-cream/80 text-3xl sm:text-5xl">
+        {[...items, ...items].map((t, i) => (
+          <span key={i} className="flex items-center gap-12">
+            {t}
+            <span className="size-2 rounded-full bg-gold/70 inline-block" />
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- LATEST RELEASE ---------- */
+function LatestRelease() {
+  return (
+    <section id="music" className="relative grain bg-midnight py-28 sm:py-40 overflow-hidden">
+      <div className="halo animate-drift-slow" style={{ width: 600, height: 600, left: "30%", top: "20%", background: "radial-gradient(circle, rgba(74,124,133,0.25), transparent 60%)" }} />
+
+      <div className="relative mx-auto max-w-7xl px-6 sm:px-10">
+        <SectionLabel index="01" title="latest release" />
+
+        <div className="mt-16 grid gap-12 lg:grid-cols-12 lg:gap-20 items-center">
+          {/* Cover + inline player */}
+          <div className="lg:col-span-5">
+            <CoverPlayer
+              src="/music/Hurt Somebody.wav"
+              cover={COVER_IMG}
+              alt="hurt somebody — cover art"
+            />
+            <p className="mt-4 text-xs uppercase tracking-[0.3em] text-cream-dim flex items-center gap-3">
+              <span className="size-1.5 rounded-full bg-gold animate-pulse" />
+              now playing on every platform
+            </p>
+          </div>
+
+          {/* Details */}
+          <div className="lg:col-span-7">
+            <p className="text-xs uppercase tracking-[0.4em] text-cream-dim">single · 2026</p>
+            <h2 className="mt-4 font-display lowercase font-semibold leading-[0.9] text-cream"
+                style={{ fontSize: "clamp(3rem, 7vw, 6rem)" }}>
+              hurt<br/>somebody
+            </h2>
+            <p className="mt-8 max-w-lg text-base leading-relaxed text-cream-dim">
+              A late-night confession dressed in hushed drums and warm tape saturation —
+              recorded between Tel Aviv and a small studio in East London. The first taste of
+              what's coming.
+            </p>
+
+            <div className="mt-12 grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {STREAMING.map(({ name, href, icon: Icon }) => (
+                <a
+                  key={name}
+                  href={href}
+                  className="group flex items-center justify-between gap-2 rounded-sm border border-cream/15 bg-steel/40 px-3 py-3 sm:py-2.5 text-xs text-cream hover:border-cream/40 hover:bg-steel transition"
+                >
+                  <span className="flex items-center gap-3">
+                    <Icon className="size-4 text-cream-dim group-hover:text-cream transition" />
+                    <span className="lowercase tracking-wide">{name}</span>
+                  </span>
+                  <ArrowUpRight className="size-3.5 text-cream-dim opacity-0 group-hover:opacity-100 transition" />
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------- DISCOGRAPHY ---------- */
+function Discography() {
+  return (
+    <section id="songs" className="relative bg-ink py-28 sm:py-40">
+      <div className="mx-auto max-w-7xl px-6 sm:px-10">
+        <div className="flex items-end justify-between gap-6">
+          <SectionLabel index="02" title="all songs" />
+          <p className="hidden sm:block text-xs uppercase tracking-[0.3em] text-cream-dim">
+            {SONGS.length.toString().padStart(2, "0")} tracks
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <SongList songs={SONGS} />
+      </div>
+    </section>
+  );
+}
+
+/* ---------- VIDEOS ---------- */
+function Videos() {
+  return (
+    <section id="videos" className="relative bg-ink py-28 sm:py-40">
+      <div className="mx-auto max-w-7xl px-6 sm:px-10">
+        <SectionLabel index="03" title="visuals" />
+        <div className="mt-16 grid gap-6 md:grid-cols-3">
+          {VIDEOS.map((v, i) => (
+            <a
+              key={v.title}
+              href="#"
+              className="group relative aspect-[4/5] overflow-hidden rounded-sm bg-steel"
+            >
+              {/* Thumbnail (uses hero photo for first card; placeholder gradient panels for others) */}
+              {i === 0 ? (
+                <Image
+                  src={HERO_IMG}
+                  alt={v.title}
+                  fill
+                  sizes="(min-width: 768px) 33vw, 90vw"
+                  className="object-cover opacity-80 transition-all duration-700 group-hover:scale-105 group-hover:opacity-100"
+                />
+              ) : (
+                <div
+                  className="absolute inset-0 transition-transform duration-700 group-hover:scale-105"
+                  style={{
+                    background: i === 1
+                      ? "linear-gradient(135deg, #16242c 0%, #2a4751 60%, #4a7c85 100%)"
+                      : "linear-gradient(160deg, #0c1419 0%, #16242c 50%, #c8b27f 140%)",
+                  }}
+                />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/30 to-transparent" />
+
+              {/* Play badge */}
+              <div className="absolute top-5 right-5 size-12 rounded-full border border-cream/30 backdrop-blur-sm flex items-center justify-center group-hover:bg-cream group-hover:border-cream transition">
+                <Play className="size-4 fill-cream text-cream group-hover:fill-ink group-hover:text-ink transition" />
+              </div>
+
+              {/* Meta */}
+              <div className="absolute inset-x-0 bottom-0 p-6">
+                <p className="text-[10px] uppercase tracking-[0.4em] text-cream-dim">
+                  {v.year} · {v.duration}
+                </p>
+                <h3 className="mt-2 font-display lowercase text-cream text-3xl font-medium">
+                  {v.title}
+                </h3>
+              </div>
+            </a>
+          ))}
         </div>
-      </main>
+      </div>
+    </section>
+  );
+}
+
+/* ---------- TOUR ---------- */
+function Tour() {
+  return (
+    <section id="tour" className="relative grain bg-midnight py-28 sm:py-40 overflow-hidden">
+      <div className="halo animate-drift" style={{ width: 600, height: 600, right: "-10%", top: "30%", background: "radial-gradient(circle, rgba(74,124,133,0.2), transparent 60%)" }} />
+
+      <div className="relative mx-auto max-w-7xl px-6 sm:px-10">
+        <div className="flex items-end justify-between gap-6">
+          <SectionLabel index="04" title="on tour" />
+          <p className="hidden sm:block text-xs uppercase tracking-[0.3em] text-cream-dim">
+            world tour · 2026
+          </p>
+        </div>
+
+        <ul className="mt-16 divide-y divide-white/10 border-y border-white/10">
+          {TOUR.map((show) => (
+            <li key={show.date + show.city} className="group">
+              <a href="#" className="grid grid-cols-12 gap-4 items-center py-6 px-2 hover:bg-cream/5 transition">
+                <span className="col-span-3 sm:col-span-2 font-display text-cream text-xl tracking-wide">
+                  {show.date}
+                </span>
+                <span className="col-span-5 sm:col-span-4 font-display lowercase text-cream text-2xl sm:text-3xl">
+                  {show.city}
+                </span>
+                <span className="col-span-3 hidden sm:block text-cream-dim text-sm">
+                  {show.venue}
+                </span>
+                <span className="col-span-1 hidden sm:flex items-center gap-1 text-xs uppercase tracking-[0.3em] text-cream-dim">
+                  <MapPin className="size-3" /> {show.country}
+                </span>
+                <span className="col-span-4 sm:col-span-2 flex justify-end items-center gap-2 text-xs uppercase tracking-[0.2em] text-cream-dim group-hover:text-cream transition">
+                  tickets
+                  <ArrowUpRight className="size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+
+        <p className="mt-8 text-xs uppercase tracking-[0.3em] text-cream-dim">
+          more dates announced soon — sign up below to be the first to know.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+/* ---------- ABOUT ---------- */
+function About() {
+  return (
+    <section id="about" className="relative bg-ink py-28 sm:py-40">
+      <div className="mx-auto max-w-7xl px-6 sm:px-10">
+        <SectionLabel index="05" title="the artist" />
+
+        <div className="mt-16 grid gap-12 lg:grid-cols-12 lg:gap-20 items-start">
+          <div className="lg:col-span-5 relative aspect-[4/5] overflow-hidden rounded-sm">
+            <Image
+              src={HERO_IMG}
+              alt="Noah Hill portrait"
+              fill
+              sizes="(min-width: 1024px) 40vw, 90vw"
+              className="object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-ink/40 to-transparent" />
+          </div>
+
+          <div className="lg:col-span-7 lg:pt-8">
+            <h2 className="font-display lowercase font-semibold leading-[0.95] text-cream"
+                style={{ fontSize: "clamp(2.5rem, 5vw, 4.5rem)" }}>
+              quiet songs <br/>for loud nights.
+            </h2>
+            <div className="mt-10 space-y-6 text-cream-dim leading-relaxed max-w-xl">
+              <p>
+                Noah Hill writes the kind of songs that sit inside a room with you — close,
+                unhurried, and honest. Self-taught on a borrowed guitar at fourteen, he started
+                uploading bedroom demos at sixteen and built a quiet but devoted following one
+                listener at a time.
+              </p>
+              <p>
+                His debut single <em className="text-cream not-italic">"hurt somebody"</em> was
+                produced between Tel Aviv and London, and arrived as a meditation on the small
+                cruelties we don't talk about. A debut EP follows later this year.
+              </p>
+            </div>
+
+            <dl className="mt-12 grid grid-cols-3 gap-6 max-w-xl">
+              <Stat k="2.4M" v="monthly listeners" />
+              <Stat k="12" v="cities · 2026" />
+              <Stat k="08" v="songs · debut EP" />
+            </dl>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Stat({ k, v }: { k: string; v: string }) {
+  return (
+    <div className="border-l border-cream/20 pl-4">
+      <dt className="font-display text-cream text-3xl">{k}</dt>
+      <dd className="mt-1 text-[10px] uppercase tracking-[0.3em] text-cream-dim">{v}</dd>
     </div>
+  );
+}
+
+/* ---------- NEWSLETTER ---------- */
+function Newsletter() {
+  return (
+    <section className="relative grain bg-midnight py-28 sm:py-32 overflow-hidden">
+      <div className="halo animate-drift-slow" style={{ width: 700, height: 700, left: "50%", top: "-20%", transform: "translateX(-50%)", background: "radial-gradient(circle, rgba(74,124,133,0.35), transparent 60%)" }} />
+      <div className="relative mx-auto max-w-3xl px-6 sm:px-10 text-center">
+        <p className="text-xs uppercase tracking-[0.4em] text-cream-dim">stay close</p>
+        <h2 className="mt-4 font-display lowercase font-semibold leading-[0.95] text-cream"
+            style={{ fontSize: "clamp(2.5rem, 6vw, 5rem)" }}>
+          new music. early.
+        </h2>
+        <p className="mt-6 text-cream-dim max-w-md mx-auto">
+          Pre-saves, unreleased demos, ticket pre-sales — sent rarely, never spammy.
+        </p>
+
+        <form suppressHydrationWarning className="mt-10 mx-auto flex max-w-md flex-col sm:flex-row gap-3">
+          <label className="sr-only" htmlFor="email">Email</label>
+          <div className="relative flex-1">
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-cream-dim" />
+            <input
+              suppressHydrationWarning
+              id="email"
+              type="email"
+              required
+              placeholder="your email address"
+              className="w-full rounded-full border border-cream/20 bg-steel/40 pl-11 pr-4 py-3.5 text-sm text-cream placeholder:text-cream-dim/70 focus:border-cream/60 focus:outline-none"
+            />
+          </div>
+          <button
+            suppressHydrationWarning
+            type="submit"
+            className="rounded-full bg-cream px-7 py-3.5 text-sm font-medium uppercase tracking-[0.2em] text-ink hover:bg-gold transition"
+          >
+            subscribe
+          </button>
+        </form>
+      </div>
+    </section>
+  );
+}
+
+/* ---------- FOOTER ---------- */
+function Footer() {
+  return (
+    <footer className="bg-ink border-t border-white/5">
+      <div className="mx-auto max-w-7xl px-6 sm:px-10 py-16">
+        <div className="grid gap-10 md:grid-cols-3 items-start">
+          <div>
+            <p className="font-display text-cream text-2xl lowercase">noah hill</p>
+            <p className="mt-3 text-xs uppercase tracking-[0.3em] text-cream-dim">
+              official site · 2026
+            </p>
+          </div>
+
+          <ul className="flex md:justify-center items-center gap-5">
+            <SocialLink href="#" label="Instagram"><InstagramIcon className="size-4" /></SocialLink>
+            <SocialLink href="#" label="YouTube"><YoutubeIcon className="size-4" /></SocialLink>
+            <SocialLink href="#" label="TikTok"><TiktokIcon className="size-4" /></SocialLink>
+            <SocialLink href="#" label="Spotify"><SpotifyIcon className="size-4" /></SocialLink>
+            <SocialLink href="#" label="Apple Music"><AppleIcon className="size-4" /></SocialLink>
+          </ul>
+
+          <div className="md:text-right text-xs text-cream-dim space-y-2">
+            <p><a href="mailto:management@noahhillmusic.com" className="hover:text-cream transition">management@noahhillmusic.com</a></p>
+            <p><a href="mailto:press@noahhillmusic.com" className="hover:text-cream transition">press@noahhillmusic.com</a></p>
+          </div>
+        </div>
+
+        <div className="mt-12 pt-6 border-t border-white/5 flex flex-col sm:flex-row justify-between gap-3 text-[11px] uppercase tracking-[0.3em] text-cream-dim/70">
+          <p>© 2026 noah hill · all rights reserved</p>
+          <p className="flex items-center gap-2">
+            <Music2 className="size-3" /> made with care
+          </p>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+function SocialLink({ href, label, children }: { href: string; label: string; children: React.ReactNode }) {
+  return (
+    <li>
+      <a
+        href={href}
+        aria-label={label}
+        className="flex size-10 items-center justify-center rounded-full border border-cream/15 text-cream-dim hover:border-cream/50 hover:text-cream transition"
+      >
+        {children}
+      </a>
+    </li>
+  );
+}
+
+/* ---------- SECTION LABEL ---------- */
+function SectionLabel({ index, title }: { index: string; title: string }) {
+  return (
+    <div className="flex items-center gap-6">
+      <span className="font-display text-cream-dim text-sm tracking-[0.3em]">{index}</span>
+      <span className="h-px flex-1 max-w-16 bg-cream-dim/30" />
+      <span className="text-xs uppercase tracking-[0.4em] text-cream-dim">{title}</span>
+    </div>
+  );
+}
+
+/* ---------- INLINE BRAND ICONS (lucide doesn't ship these) ---------- */
+function SpotifyIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm4.6 14.43a.62.62 0 0 1-.86.21c-2.36-1.44-5.33-1.77-8.83-.97a.62.62 0 0 1-.28-1.22c3.83-.88 7.12-.5 9.76 1.12.3.18.39.57.21.86Zm1.23-2.74a.78.78 0 0 1-1.07.26c-2.7-1.66-6.82-2.14-10.02-1.17a.78.78 0 1 1-.45-1.49c3.66-1.11 8.2-.57 11.3 1.33.37.23.49.71.24 1.07Zm.1-2.85c-3.24-1.92-8.59-2.1-11.69-1.16a.94.94 0 1 1-.55-1.79c3.56-1.08 9.47-.87 13.2 1.34.45.27.6.85.33 1.3a.94.94 0 0 1-1.29.31Z"/>
+    </svg>
+  );
+}
+function AppleIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path d="M16.36 12.7c-.02-2.4 1.96-3.55 2.05-3.61-1.12-1.64-2.86-1.86-3.48-1.89-1.48-.15-2.89.87-3.65.87-.76 0-1.91-.85-3.14-.83-1.62.02-3.11.94-3.94 2.39-1.68 2.91-.43 7.22 1.21 9.58.8 1.16 1.75 2.45 3 2.41 1.21-.05 1.66-.78 3.12-.78 1.46 0 1.86.78 3.13.76 1.29-.02 2.11-1.18 2.9-2.34.91-1.34 1.29-2.64 1.31-2.71-.03-.01-2.51-.96-2.51-3.85ZM14.18 5.4c.66-.81 1.11-1.93.99-3.05-.96.04-2.13.64-2.81 1.45-.62.71-1.16 1.86-1.02 2.95 1.07.08 2.18-.55 2.84-1.35Z"/>
+    </svg>
+  );
+}
+function YoutubeIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path d="M23.5 6.2c-.3-1-1-1.8-2-2C19.5 3.7 12 3.7 12 3.7s-7.5 0-9.5.5c-1 .3-1.7 1-2 2C0 8.2 0 12 0 12s0 3.8.5 5.8c.3 1 1 1.8 2 2 2 .5 9.5.5 9.5.5s7.5 0 9.5-.5c1-.3 1.7-1 2-2 .5-2 .5-5.8.5-5.8s0-3.8-.5-5.8ZM9.6 15.6V8.4l6.3 3.6-6.3 3.6Z"/>
+    </svg>
+  );
+}
+function AmazonIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path d="M14.86 13.5c-1.79 1.32-4.39 2.02-6.62 2.02-3.13 0-5.96-1.16-8.1-3.08-.17-.15-.02-.36.18-.24 2.31 1.34 5.16 2.15 8.1 2.15 1.99 0 4.18-.41 6.2-1.27.3-.13.55.2.24.42Zm.74-.85c-.23-.29-1.51-.14-2.09-.07-.17.02-.2-.13-.04-.24 1.02-.72 2.7-.51 2.89-.27.2.24-.05 1.93-1.01 2.74-.15.13-.29.06-.22-.1.21-.55.7-1.77.47-2.06ZM12.65 1.5c-3.83 0-6.95 2.49-6.95 5.55 0 3.06 2.31 5.06 5.69 4.95.3-.06 1.05-.07 1.83-.21l.36-.07c.07.04.13.1.13.18 0 .42-2.04 1.7-3.36 1.7-1.61 0-2.93-.74-3.71-2.04-.06-.1-.18-.04-.13.07.86 2.05 2.94 3.07 5.31 3.07 3.45 0 6.62-2.16 6.62-5.66 0-3.41-2.42-5.54-5.79-5.54Zm0 8.6c-1.51 0-2.61-1.4-2.61-3.13s1.1-3.13 2.61-3.13c1.51 0 2.61 1.4 2.61 3.13s-1.1 3.13-2.61 3.13Z"/>
+    </svg>
+  );
+}
+function InstagramIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <rect x="3" y="3" width="18" height="18" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+function TiktokIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path d="M19.6 7.3a5.7 5.7 0 0 1-3.4-1.1 5.6 5.6 0 0 1-2.2-3.7H10v12.4a2.7 2.7 0 1 1-2.7-2.7c.27 0 .54.04.79.12V8.1a6.7 6.7 0 1 0 5.91 6.65V9.9a8.6 8.6 0 0 0 5 1.6V7.3h.6Z"/>
+    </svg>
   );
 }
