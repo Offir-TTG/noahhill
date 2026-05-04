@@ -17,7 +17,12 @@ const ConfirmCtx = createContext<ConfirmApi | null>(null);
 
 export function useConfirm(): ConfirmApi {
   const ctx = useContext(ConfirmCtx);
-  if (!ctx) throw new Error("useConfirm must be used inside <ConfirmProvider>");
+  if (!ctx) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("useConfirm called outside <ConfirmProvider>; falling back to window.confirm.");
+    }
+    return async (opts) => (typeof window !== "undefined" ? window.confirm(opts.title) : false);
+  }
   return ctx;
 }
 

@@ -15,9 +15,21 @@ type ToastApi = {
 
 const ToastCtx = createContext<ToastApi | null>(null);
 
-export function useToast() {
+const NOOP_TOAST: ToastApi = {
+  show:    () => {},
+  success: () => {},
+  error:   () => {},
+  info:    () => {},
+};
+
+export function useToast(): ToastApi {
   const ctx = useContext(ToastCtx);
-  if (!ctx) throw new Error("useToast must be used inside <ToastProvider>");
+  if (!ctx) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("useToast called outside <ToastProvider>; falling back to no-op.");
+    }
+    return NOOP_TOAST;
+  }
   return ctx;
 }
 

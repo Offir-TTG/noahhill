@@ -18,7 +18,13 @@ const PromptCtx = createContext<PromptApi | null>(null);
 
 export function usePrompt(): PromptApi {
   const ctx = useContext(PromptCtx);
-  if (!ctx) throw new Error("usePrompt must be used inside <PromptProvider>");
+  if (!ctx) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("usePrompt called outside <PromptProvider>; falling back to window.prompt.");
+    }
+    return async (opts) =>
+      typeof window !== "undefined" ? window.prompt(opts.title, opts.defaultValue ?? "") : null;
+  }
   return ctx;
 }
 
