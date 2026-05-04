@@ -3,6 +3,8 @@
 import { useState, useTransition } from "react";
 import { Pencil, Trash2, Plus, Save, X, Film } from "lucide-react";
 import { createVideo, updateVideo, deleteVideo } from "./actions";
+import { useToast } from "@/components/toast";
+import { useConfirm } from "@/components/confirm";
 
 export type Video = {
   id: string;
@@ -18,18 +20,23 @@ function VideoForm({ row, onClose }: { row?: Video; onClose: () => void }) {
   const isEdit = !!row;
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const toast = useToast();
 
   const handle = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     const fd = new FormData(e.currentTarget);
+    const title = String(fd.get("title") ?? "").trim();
     startTransition(async () => {
       try {
         if (isEdit) await updateVideo(row!.id, fd);
         else await createVideo(fd);
+        toast.success(isEdit ? "video updated" : "video added", title ? `"${title}" saved.` : undefined);
         onClose();
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Save failed.");
+        const msg = err instanceof Error ? err.message : "Save failed.";
+        setError(msg);
+        toast.error(isEdit ? "could not update video" : "could not add video", msg);
       }
     });
   };
@@ -113,14 +120,27 @@ export default function VideoListAdmin({ rows }: { rows: Video[] }) {
   const [editing, setEditing] = useState<Video | "new" | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+  const toast = useToast();
+  const confirm = useConfirm();
 
-  const onDelete = (id: string, title: string) => {
-    if (!confirm(`Delete "${title}"?`)) return;
+  const onDelete = async (id: string, title: string) => {
+    const ok = await confirm({
+      title: `delete "${title}"?`,
+      description: "this removes the video from the visuals section.",
+      confirmLabel: "delete",
+      danger: true,
+    });
+    if (!ok) return;
     setDeleting(id);
     startTransition(async () => {
-      try { await deleteVideo(id); }
-      catch (e) { alert(e instanceof Error ? e.message : "Delete failed."); }
-      finally { setDeleting(null); }
+      try {
+        await deleteVideo(id);
+        toast.success("video deleted", `"${title}" removed.`);
+      } catch (e) {
+        toast.error("could not delete video", e instanceof Error ? e.message : "please try again.");
+      } finally {
+        setDeleting(null);
+      }
     });
   };
 

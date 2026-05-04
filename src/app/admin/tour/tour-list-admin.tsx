@@ -3,6 +3,8 @@
 import { useState, useTransition } from "react";
 import { Pencil, Trash2, Plus, Save, X, ExternalLink } from "lucide-react";
 import { createTourDate, updateTourDate, deleteTourDate } from "./actions";
+import { useToast } from "@/components/toast";
+import { useConfirm } from "@/components/confirm";
 
 export type TourDate = {
   id: string;
@@ -18,18 +20,23 @@ function TourForm({ row, onClose }: { row?: TourDate; onClose: () => void }) {
   const isEdit = !!row;
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const toast = useToast();
 
   const handle = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     const fd = new FormData(e.currentTarget);
+    const city = String(fd.get("city") ?? "").trim();
     startTransition(async () => {
       try {
         if (isEdit) await updateTourDate(row!.id, fd);
         else await createTourDate(fd);
+        toast.success(isEdit ? "show updated" : "show added", city ? `${city} saved.` : undefined);
         onClose();
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Save failed.");
+        const msg = err instanceof Error ? err.message : "Save failed.";
+        setError(msg);
+        toast.error(isEdit ? "could not update show" : "could not add show", msg);
       }
     });
   };
@@ -95,14 +102,27 @@ export default function TourListAdmin({ rows }: { rows: TourDate[] }) {
   const [editing, setEditing] = useState<TourDate | "new" | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+  const toast = useToast();
+  const confirm = useConfirm();
 
-  const onDelete = (id: string, city: string, date: string) => {
-    if (!confirm(`Delete the ${date} ${city} show?`)) return;
+  const onDelete = async (id: string, city: string, date: string) => {
+    const ok = await confirm({
+      title: `delete ${city}?`,
+      description: `the ${date} ${city} show will be removed from the tour list.`,
+      confirmLabel: "delete",
+      danger: true,
+    });
+    if (!ok) return;
     setDeleting(id);
     startTransition(async () => {
-      try { await deleteTourDate(id); }
-      catch (e) { alert(e instanceof Error ? e.message : "Delete failed."); }
-      finally { setDeleting(null); }
+      try {
+        await deleteTourDate(id);
+        toast.success("show deleted", `${date} ${city} removed.`);
+      } catch (e) {
+        toast.error("could not delete show", e instanceof Error ? e.message : "please try again.");
+      } finally {
+        setDeleting(null);
+      }
     });
   };
 

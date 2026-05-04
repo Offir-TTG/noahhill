@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Inter } from "next/font/google";
+import UIProviders from "@/components/ui-providers";
 import "./globals.css";
 
 const display = Bricolage_Grotesque({
@@ -42,7 +43,7 @@ export default function RootLayout({
       className={`${display.variable} ${body.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-[var(--ink)] text-[var(--cream)] selection:bg-[var(--cream)] selection:text-[var(--ink)]">
-        {children}
+        <UIProviders>{children}</UIProviders>
       </body>
     </html>
   );

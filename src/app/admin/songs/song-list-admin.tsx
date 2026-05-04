@@ -4,6 +4,8 @@ import { useState, useTransition } from "react";
 import { Pencil, Trash2, Play, Plus } from "lucide-react";
 import SongForm from "./song-form";
 import { deleteSong } from "./actions";
+import { useToast } from "@/components/toast";
+import { useConfirm } from "@/components/confirm";
 
 type Song = {
   id: string;
@@ -18,14 +20,27 @@ export default function SongListAdmin({ songs }: { songs: Song[] }) {
   const [editing, setEditing] = useState<Song | "new" | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+  const toast = useToast();
+  const confirm = useConfirm();
 
-  const onDelete = (id: string, title: string) => {
-    if (!confirm(`Delete "${title}"? This will also delete the audio file reference.`)) return;
+  const onDelete = async (id: string, title: string) => {
+    const ok = await confirm({
+      title: `delete "${title}"?`,
+      description: "this removes the song row. the audio file reference is removed but the file in storage is kept (you can re-link it later).",
+      confirmLabel: "delete",
+      danger: true,
+    });
+    if (!ok) return;
     setDeleting(id);
     startTransition(async () => {
-      try { await deleteSong(id); }
-      catch (e) { alert(e instanceof Error ? e.message : "Delete failed."); }
-      finally { setDeleting(null); }
+      try {
+        await deleteSong(id);
+        toast.success("song deleted", `"${title}" removed.`);
+      } catch (e) {
+        toast.error("could not delete song", e instanceof Error ? e.message : "please try again.");
+      } finally {
+        setDeleting(null);
+      }
     });
   };
 

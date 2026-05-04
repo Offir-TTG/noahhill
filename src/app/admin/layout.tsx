@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "./login/actions";
-import { LayoutGrid, Music, MapPin, Film, FileText, LogOut, ExternalLink } from "lucide-react";
+import { LayoutGrid, Music, MapPin, Film, FileText, LogOut, ExternalLink, Users, Mail, Plug } from "lucide-react";
 import type { ReactNode } from "react";
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
@@ -11,37 +11,70 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   // Login page is rendered without the chrome — middleware lets it through unauthenticated.
   if (!user) return <>{children}</>;
 
-  const links = [
-    { href: "/admin",          label: "dashboard", icon: LayoutGrid },
-    { href: "/admin/sections", label: "sections",  icon: FileText  },
-    { href: "/admin/songs",    label: "songs",     icon: Music     },
-    { href: "/admin/videos",   label: "visuals",   icon: Film      },
-    { href: "/admin/tour",     label: "tour",      icon: MapPin    },
+  // Top-level links
+  const mainLinks = [
+    { href: "/admin",             label: "dashboard",   icon: LayoutGrid },
+    { href: "/admin/sections",    label: "sections",    icon: FileText  },
+    { href: "/admin/songs",       label: "songs",       icon: Music     },
+    { href: "/admin/videos",      label: "visuals",     icon: Film      },
+    { href: "/admin/tour",        label: "tour",        icon: MapPin    },
+    { href: "/admin/subscribers", label: "subscribers", icon: Users     },
+    { href: "/admin/messaging",   label: "messaging",   icon: Mail      },
   ];
 
+  // Settings group
+  const settingsLinks = [
+    { href: "/admin/connections", label: "connections", icon: Plug },
+  ];
+
+  // Flat list for the mobile horizontal scroller
+  const allLinks = [...mainLinks, ...settingsLinks];
+
   return (
-    <div className="min-h-screen bg-ink text-cream flex">
-      {/* Sidebar */}
-      <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-white/5 bg-midnight">
-        <div className="px-6 py-6 border-b border-white/5">
+    <div className="min-h-screen bg-ink text-cream md:flex">
+      {/* Sidebar — fixed on desktop so it stays put when content scrolls */}
+      <aside className="hidden md:flex fixed inset-y-0 left-0 w-64 flex-col border-r border-white/5 bg-midnight z-40">
+        <div className="px-6 py-6 border-b border-white/5 shrink-0">
           <Link href="/admin" className="font-display lowercase text-cream text-xl block">noah hill</Link>
           <p className="text-[10px] uppercase tracking-[0.3em] text-cream-dim mt-1">admin</p>
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-1">
-          {links.map(({ href, label, icon: Icon }) => (
-            <Link
-              key={href}
-              href={href}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm text-cream-dim hover:bg-cream/5 hover:text-cream transition lowercase"
-            >
-              <Icon className="size-4" />
-              {label}
-            </Link>
-          ))}
+        {/* Scrollable nav area in case the link list overflows */}
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-4">
+          <ul className="space-y-1">
+            {mainLinks.map(({ href, label, icon: Icon }) => (
+              <li key={href}>
+                <Link
+                  href={href}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm text-cream-dim hover:bg-cream/5 hover:text-cream transition lowercase"
+                >
+                  <Icon className="size-4" />
+                  {label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          {/* Settings group */}
+          <div>
+            <p className="px-3 mb-2 text-[10px] uppercase tracking-[0.3em] text-cream-dim/60">settings</p>
+            <ul className="space-y-1">
+              {settingsLinks.map(({ href, label, icon: Icon }) => (
+                <li key={href}>
+                  <Link
+                    href={href}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm text-cream-dim hover:bg-cream/5 hover:text-cream transition lowercase"
+                  >
+                    <Icon className="size-4" />
+                    {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
         </nav>
 
-        <div className="p-3 border-t border-white/5 space-y-1">
+        <div className="p-3 border-t border-white/5 space-y-1 shrink-0">
           <Link
             href="/"
             target="_blank"
@@ -71,11 +104,11 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         </form>
       </header>
 
-      {/* Main */}
-      <main className="flex-1 min-w-0 pt-14 md:pt-0">
+      {/* Main — offset on desktop to clear the fixed sidebar */}
+      <main className="flex-1 min-w-0 pt-14 md:pt-0 md:ml-64">
         {/* Mobile section nav */}
         <nav className="md:hidden flex gap-1 overflow-x-auto no-scrollbar px-3 py-3 border-b border-white/5 bg-midnight/60 backdrop-blur sticky top-14 z-30">
-          {links.map(({ href, label }) => (
+          {allLinks.map(({ href, label }) => (
             <Link
               key={href}
               href={href}

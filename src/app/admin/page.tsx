@@ -1,21 +1,31 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { Music, Film, MapPin, FileText, ArrowRight } from "lucide-react";
+import { Music, Film, MapPin, FileText, ArrowRight, Users, Mail } from "lucide-react";
 
 export default async function AdminDashboard() {
   const supabase = await createClient();
 
-  const [{ count: songsCount }, { count: videosCount }, { count: tourCount }] = await Promise.all([
+  const [
+    { count: songsCount },
+    { count: videosCount },
+    { count: tourCount },
+    { count: subscribersCount },
+    { count: campaignsCount },
+  ] = await Promise.all([
     supabase.from("songs").select("*", { count: "exact", head: true }),
     supabase.from("videos").select("*", { count: "exact", head: true }),
     supabase.from("tour_dates").select("*", { count: "exact", head: true }),
+    supabase.from("subscribers").select("*", { count: "exact", head: true }),
+    supabase.from("email_campaigns").select("*", { count: "exact", head: true }),
   ]);
 
   const tiles = [
-    { href: "/admin/sections", label: "sections", desc: "edit hero, single, about, marquee, footer", icon: FileText, count: undefined },
-    { href: "/admin/songs",    label: "songs",    desc: "tracks with audio uploads",                  icon: Music,    count: songsCount  },
-    { href: "/admin/videos",   label: "visuals",  desc: "music videos and visuals",                   icon: Film,     count: videosCount },
-    { href: "/admin/tour",     label: "tour",     desc: "show dates and ticket links",                icon: MapPin,   count: tourCount   },
+    { href: "/admin/sections",    label: "sections",    desc: "edit hero, single, about, marquee, footer", icon: FileText, count: undefined        },
+    { href: "/admin/songs",       label: "songs",       desc: "tracks with audio uploads",                  icon: Music,    count: songsCount       },
+    { href: "/admin/videos",      label: "visuals",     desc: "music videos and visuals",                   icon: Film,     count: videosCount      },
+    { href: "/admin/tour",        label: "tour",        desc: "show dates and ticket links",                icon: MapPin,   count: tourCount        },
+    { href: "/admin/subscribers", label: "subscribers", desc: "newsletter signups · export csv",            icon: Users,    count: subscribersCount },
+    { href: "/admin/messaging",   label: "messaging",   desc: "compose emails to your subscribers",         icon: Mail,     count: campaignsCount   },
   ];
 
   return (

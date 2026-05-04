@@ -1,8 +1,9 @@
 import Image from "next/image";
-import { Music2, Mail, Play, ArrowUpRight, MapPin } from "lucide-react";
+import { Music2, Play, ArrowUpRight, MapPin } from "lucide-react";
 import CoverPlayer from "./cover-player";
 import SongList from "./song-list";
 import Nav from "./nav";
+import SubscribeForm from "./subscribe-form";
 import { createClient } from "@/lib/supabase/server";
 import { mergeContent, type SiteContent } from "@/lib/site-content";
 
@@ -385,18 +386,7 @@ function Newsletter({ content }: { content: SiteContent }) {
           {content.newsletter.copy}
         </p>
 
-        <form suppressHydrationWarning className="mt-10 mx-auto flex max-w-md flex-col sm:flex-row gap-3">
-          <label className="sr-only" htmlFor="email">Email</label>
-          <div className="relative flex-1">
-            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-cream-dim" />
-            <input suppressHydrationWarning id="email" type="email" required placeholder="your email address"
-              className="w-full rounded-full border border-cream/20 bg-steel/40 pl-11 pr-4 py-3.5 text-sm text-cream placeholder:text-cream-dim/70 focus:border-cream/60 focus:outline-none" />
-          </div>
-          <button suppressHydrationWarning type="submit"
-            className="rounded-full bg-cream px-7 py-3.5 text-sm font-medium uppercase tracking-[0.2em] text-ink hover:bg-gold transition">
-            subscribe
-          </button>
-        </form>
+        <SubscribeForm />
       </div>
     </section>
   );

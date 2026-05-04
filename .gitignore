@@ -33,6 +33,9 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# Migrations that contain seeded credentials — never commit
+supabase/migrations/0005_connections.sql
+
 # vercel
 .vercel
 

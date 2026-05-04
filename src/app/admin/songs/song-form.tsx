@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { createSong, updateSong } from "./actions";
 import { Save, X, Music } from "lucide-react";
+import { useToast } from "@/components/toast";
 
 type Song = {
   id?: string;
@@ -17,18 +18,23 @@ export default function SongForm({ song, onClose }: { song?: Song; onClose?: () 
   const isEdit = !!song?.id;
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const toast = useToast();
 
   const handle = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     const fd = new FormData(e.currentTarget);
+    const title = String(fd.get("title") ?? "").trim();
     startTransition(async () => {
       try {
         if (isEdit) await updateSong(song!.id!, fd);
         else await createSong(fd);
+        toast.success(isEdit ? "song updated" : "song added", title ? `"${title}" saved.` : undefined);
         onClose?.();
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Something went wrong.");
+        const msg = err instanceof Error ? err.message : "Something went wrong.";
+        setError(msg);
+        toast.error(isEdit ? "could not update song" : "could not add song", msg);
       }
     });
   };
