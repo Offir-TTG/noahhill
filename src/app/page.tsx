@@ -347,7 +347,7 @@ function TourEmptyState() {
           off the road.
         </h3>
         <p className="mt-6 text-base leading-relaxed text-cream-dim max-w-md mx-auto">
-          no dates on the books right now — back in the studio, working on what&apos;s next.
+          no dates on the books right now. back in the studio, working on what&apos;s next.
         </p>
         <p className="mt-3 text-base leading-relaxed text-cream-dim max-w-md mx-auto">
           sign up below to be the first to hear when shows are announced.
