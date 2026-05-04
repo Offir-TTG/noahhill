@@ -3,61 +3,44 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
-const slugify = (s: string) =>
-  s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 60) || "track";
+type SongInput = {
+  title: string;
+  year: string | null;
+  duration: string | null;
+  sort_order: number;
+  audio_url?: string | null;   // pre-uploaded by the browser
+};
 
-async function uploadAudio(file: File): Promise<string> {
+export async function createSong(input: SongInput) {
   const supabase = await createClient();
-  const ext  = file.name.split(".").pop()?.toLowerCase() || "wav";
-  const path = `${Date.now()}-${slugify(file.name.replace(/\.[^.]+$/, ""))}.${ext}`;
+  if (!input.title?.trim()) throw new Error("Title is required.");
 
-  const { error } = await supabase.storage.from("music").upload(path, file, {
-    cacheControl: "3600",
-    upsert: false,
-    contentType: file.type || undefined,
-  });
-  if (error) throw new Error(`Upload failed: ${error.message}`);
+  const row = {
+    title: input.title.trim(),
+    year: input.year?.trim() || null,
+    duration: input.duration?.trim() || null,
+    sort_order: input.sort_order || 0,
+    audio_url: input.audio_url || null,
+  };
 
-  const { data } = supabase.storage.from("music").getPublicUrl(path);
-  return data.publicUrl;
-}
-
-export async function createSong(formData: FormData) {
-  const supabase = await createClient();
-
-  const title    = String(formData.get("title")    ?? "").trim();
-  const year     = String(formData.get("year")     ?? "").trim() || null;
-  const duration = String(formData.get("duration") ?? "").trim() || null;
-  const sortRaw  = formData.get("sort_order");
-  const sort_order = sortRaw ? Number(sortRaw) : 0;
-  const audio = formData.get("audio") as File | null;
-
-  if (!title) throw new Error("Title is required.");
-
-  let audio_url: string | null = null;
-  if (audio && audio.size > 0) audio_url = await uploadAudio(audio);
-
-  const { error } = await supabase.from("songs").insert({ title, year, duration, audio_url, sort_order });
+  const { error } = await supabase.from("songs").insert(row);
   if (error) throw new Error(error.message);
 
   revalidatePath("/admin/songs");
   revalidatePath("/");
 }
 
-export async function updateSong(id: string, formData: FormData) {
+export async function updateSong(id: string, input: SongInput) {
   const supabase = await createClient();
+  if (!input.title?.trim()) throw new Error("Title is required.");
 
-  const title    = String(formData.get("title")    ?? "").trim();
-  const year     = String(formData.get("year")     ?? "").trim() || null;
-  const duration = String(formData.get("duration") ?? "").trim() || null;
-  const sortRaw  = formData.get("sort_order");
-  const sort_order = sortRaw ? Number(sortRaw) : 0;
-  const audio = formData.get("audio") as File | null;
-
-  if (!title) throw new Error("Title is required.");
-
-  const updates: Record<string, unknown> = { title, year, duration, sort_order };
-  if (audio && audio.size > 0) updates.audio_url = await uploadAudio(audio);
+  const updates: Record<string, unknown> = {
+    title: input.title.trim(),
+    year: input.year?.trim() || null,
+    duration: input.duration?.trim() || null,
+    sort_order: input.sort_order || 0,
+  };
+  if (input.audio_url) updates.audio_url = input.audio_url;
 
   const { error } = await supabase.from("songs").update(updates).eq("id", id);
   if (error) throw new Error(error.message);

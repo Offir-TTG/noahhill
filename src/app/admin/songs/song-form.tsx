@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { createSong, updateSong } from "./actions";
-import { Save, X, Music } from "lucide-react";
+import { Save, X, Music, Upload } from "lucide-react";
 import { useToast } from "@/components/toast";
+import { createClient } from "@/lib/supabase/client";
 
 type Song = {
   id?: string;
@@ -14,33 +15,87 @@ type Song = {
   sort_order: number;
 };
 
+const slugify = (s: string) =>
+  s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 60) || "track";
+
 export default function SongForm({ song, onClose }: { song?: Song; onClose?: () => void }) {
   const isEdit = !!song?.id;
   const [error, setError] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<{ status: "idle" | "uploading" | "done"; pct: number; name: string }>({
+    status: "idle", pct: 0, name: "",
+  });
   const [isPending, startTransition] = useTransition();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const toast = useToast();
+
+  /** Upload directly from the browser to Supabase Storage, return the public URL. */
+  async function uploadAudioToStorage(file: File): Promise<string> {
+    const ext  = file.name.split(".").pop()?.toLowerCase() || "wav";
+    const path = `${Date.now()}-${slugify(file.name.replace(/\.[^.]+$/, ""))}.${ext}`;
+
+    setUploadProgress({ status: "uploading", pct: 0, name: file.name });
+
+    const supabase = createClient();
+    const { error: upErr } = await supabase.storage
+      .from("music")
+      .upload(path, file, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: file.type || undefined,
+      });
+    if (upErr) {
+      setUploadProgress({ status: "idle", pct: 0, name: "" });
+      throw new Error(`Upload failed: ${upErr.message}`);
+    }
+
+    const { data: pub } = supabase.storage.from("music").getPublicUrl(path);
+    setUploadProgress({ status: "done", pct: 100, name: file.name });
+    return pub.publicUrl;
+  }
 
   const handle = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     const fd = new FormData(e.currentTarget);
-    const title = String(fd.get("title") ?? "").trim();
+    const title    = String(fd.get("title")    ?? "").trim();
+    const year     = String(fd.get("year")     ?? "").trim();
+    const duration = String(fd.get("duration") ?? "").trim();
+    const sort_order = Number(fd.get("sort_order") ?? 0) || 0;
+    const file = fileRef.current?.files?.[0] ?? null;
+
+    if (!title) { setError("Title is required."); return; }
+
     startTransition(async () => {
       try {
-        if (isEdit) await updateSong(song!.id!, fd);
-        else await createSong(fd);
-        toast.success(isEdit ? "song updated" : "song added", title ? `"${title}" saved.` : undefined);
+        let audio_url: string | null | undefined = undefined;
+        if (file && file.size > 0) {
+          audio_url = await uploadAudioToStorage(file);
+        }
+
+        if (isEdit) {
+          await updateSong(song!.id!, { title, year, duration, sort_order, audio_url });
+        } else {
+          if (!audio_url) {
+            // For new songs we want an audio file; allow without it but warn.
+            await createSong({ title, year, duration, sort_order, audio_url: null });
+          } else {
+            await createSong({ title, year, duration, sort_order, audio_url });
+          }
+        }
+        toast.success(isEdit ? "song updated" : "song added", `"${title}" saved.`);
         onClose?.();
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Something went wrong.";
         setError(msg);
         toast.error(isEdit ? "could not update song" : "could not add song", msg);
+        setUploadProgress({ status: "idle", pct: 0, name: "" });
       }
     });
   };
 
   return (
-    <form onSubmit={handle} className="space-y-4 rounded-sm border border-white/10 bg-steel/30 p-6">
+    <form ref={formRef} onSubmit={handle} className="space-y-4 rounded-sm border border-white/10 bg-steel/30 p-6">
       <div className="flex items-center justify-between">
         <p className="font-display lowercase text-cream text-2xl">{isEdit ? "edit song" : "new song"}</p>
         {onClose && (
@@ -96,13 +151,25 @@ export default function SongForm({ song, onClose }: { song?: Song; onClose?: () 
           audio file {isEdit && <span className="text-cream-dim/60 normal-case tracking-normal">(leave empty to keep current)</span>}
         </label>
         <input
+          ref={fileRef}
           name="audio"
           type="file"
           accept="audio/*"
-          required={!isEdit}
           className="mt-1 w-full text-xs text-cream-dim file:mr-3 file:rounded-sm file:border-0 file:bg-cream file:px-3 file:py-2 file:text-[10px] file:uppercase file:tracking-[0.2em] file:text-ink file:cursor-pointer hover:file:bg-gold"
         />
-        {song?.audio_url && (
+        {uploadProgress.status === "uploading" && (
+          <p className="mt-2 text-[11px] text-cream-dim flex items-center gap-2">
+            <Upload className="size-3 animate-pulse" />
+            uploading {uploadProgress.name}…
+          </p>
+        )}
+        {uploadProgress.status === "done" && (
+          <p className="mt-2 text-[11px] text-gold flex items-center gap-2">
+            <Music className="size-3" />
+            uploaded {uploadProgress.name}
+          </p>
+        )}
+        {song?.audio_url && uploadProgress.status === "idle" && (
           <p className="mt-2 text-[10px] text-cream-dim/70 truncate flex items-center gap-2">
             <Music className="size-3 shrink-0" />
             current: {song.audio_url.split("/").pop()}
@@ -119,7 +186,7 @@ export default function SongForm({ song, onClose }: { song?: Song; onClose?: () 
           className="inline-flex items-center gap-2 rounded-sm bg-cream px-5 py-2.5 text-xs font-medium uppercase tracking-[0.2em] text-ink hover:bg-gold transition disabled:opacity-50"
         >
           <Save className="size-3.5" />
-          {isPending ? "saving..." : isEdit ? "save changes" : "create song"}
+          {isPending ? (uploadProgress.status === "uploading" ? "uploading…" : "saving…") : isEdit ? "save changes" : "create song"}
         </button>
         {onClose && (
           <button
