@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Save, Plus, Trash2 } from "lucide-react";
 import type { SiteContent } from "@/lib/site-content";
 import { saveSiteContent } from "./actions";
@@ -13,14 +14,21 @@ export default function SectionsEditor({ initial }: { initial: SiteContent }) {
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   const save = () => {
     setError(null);
     startTransition(async () => {
       try {
-        await saveSiteContent(content, { hero: heroFile, single: singleFile, about: aboutFile });
+        // The action returns the merged content (with any newly-uploaded image URLs).
+        // We swap our local state in so the previews refresh without a page reload.
+        const updated = await saveSiteContent(content, { hero: heroFile, single: singleFile, about: aboutFile });
+        setContent(updated);
         setHeroFile(null); setSingleFile(null); setAboutFile(null);
         setSavedAt(Date.now());
+        // Refresh the route so server components (e.g. the public site if open in the same tab)
+        // pick up the new revalidated data on next navigation.
+        router.refresh();
       } catch (e) {
         setError(e instanceof Error ? e.message : "Save failed.");
       }

@@ -24,7 +24,7 @@ async function uploadImage(file: File): Promise<string> {
 export async function saveSiteContent(
   content: SiteContent,
   uploads: { hero?: File | null; single?: File | null; about?: File | null },
-) {
+): Promise<SiteContent> {
   const supabase = await createClient();
 
   // Capture previous image URLs so we can drop the orphans after a successful save.
@@ -56,4 +56,8 @@ export async function saveSiteContent(
 
   revalidatePath("/");
   revalidatePath("/admin/sections");
+
+  // Return the updated content so the client editor can sync its state
+  // (in particular, the new image URLs after upload).
+  return content;
 }
