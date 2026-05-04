@@ -297,7 +297,7 @@ function Tour({ rows }: { rows: TourDate[] }) {
 
       <div className="relative mx-auto max-w-7xl px-6 sm:px-10">
         <div className="flex items-end justify-between gap-6">
-          <SectionLabel index="04" title={isEmpty ? "off the road" : "on tour"} />
+          <SectionLabel index="04" title="tours" />
           <p className="hidden sm:block text-xs uppercase tracking-[0.3em] text-cream-dim">
             {isEmpty ? "next dates · soon" : "world tour · 2026"}
           </p>
@@ -341,12 +341,16 @@ function TourEmptyState() {
   return (
     <div className="mt-16 border-y border-white/10 py-20 sm:py-28">
       <div className="max-w-2xl mx-auto text-center px-4">
-        <h3 className="font-display lowercase font-semibold leading-[0.9] text-cream"
-            style={{ fontSize: "clamp(2.5rem, 6vw, 4.5rem)" }}>
-          no shows on the calendar.
+        <p className="text-[10px] uppercase tracking-[0.5em] text-cream-dim">currently</p>
+        <h3 className="mt-4 font-display lowercase font-semibold leading-[0.9] text-cream"
+            style={{ fontSize: "clamp(2.75rem, 7vw, 5rem)" }}>
+          off the road.
         </h3>
         <p className="mt-6 text-base leading-relaxed text-cream-dim max-w-md mx-auto">
-          back in the studio, working on what&apos;s next. sign up below to be the first to hear when shows are announced.
+          no dates on the books right now — back in the studio, working on what&apos;s next.
+        </p>
+        <p className="mt-3 text-base leading-relaxed text-cream-dim max-w-md mx-auto">
+          sign up below to be the first to hear when shows are announced.
         </p>
         <a
           href="#newsletter"
