@@ -5,6 +5,7 @@ import { Plus, Save, Trash2 } from "lucide-react";
 import { useToast } from "@/components/toast";
 import type { EpkContent } from "@/lib/epk-content";
 import { saveEpkContent } from "./actions";
+import PhotoManager from "./photo-manager";
 
 export default function EpkEditor({ initial }: { initial: EpkContent }) {
   const [epk, setEpk] = useState<EpkContent>(initial);
@@ -119,36 +120,9 @@ export default function EpkEditor({ initial }: { initial: EpkContent }) {
 
       <Card
         title="press photos"
-        hint="leave the path empty and name a song to use that song's cover art instead."
-        onAdd={() =>
-          set("photos", [
-            ...epk.photos,
-            { url: "", label: "", credit: "photo: courtesy of the artist", filename: "noah-hill-press.jpg", orientation: "portrait" },
-          ])
-        }
+        hint="drop a file on a thumbnail or click it to upload. leave the image empty and name a song to use its cover art instead."
       >
-        {epk.photos.map((p, i) => (
-          <Item key={i} onRemove={() => set("photos", epk.photos.filter((_, j) => j !== i))}>
-            <Row>
-              <Text label="label" value={p.label}
-                onChange={(v) => set("photos", at(epk.photos, i, { label: v }))} />
-              <Text label="download filename" value={p.filename}
-                onChange={(v) => set("photos", at(epk.photos, i, { filename: v }))} />
-            </Row>
-            <Row>
-              <Text label="image path or url" value={p.url ?? ""}
-                onChange={(v) => set("photos", at(epk.photos, i, { url: v || null }))} />
-              <Text label="or song cover art" value={p.fromSong ?? ""}
-                onChange={(v) => set("photos", at(epk.photos, i, { fromSong: v }))} />
-            </Row>
-            <Row>
-              <Text label="credit" value={p.credit}
-                onChange={(v) => set("photos", at(epk.photos, i, { credit: v }))} />
-              <Select label="shape" value={p.orientation} options={["portrait", "square", "landscape"]}
-                onChange={(v) => set("photos", at(epk.photos, i, { orientation: v as typeof p.orientation }))} />
-            </Row>
-          </Item>
-        ))}
+        <PhotoManager photos={epk.photos} onChange={(next) => set("photos", next)} />
       </Card>
 
       <Card title="contact" onAdd={() => set("contacts", [...epk.contacts, { role: "", name: "", email: "", note: "" }])}>
@@ -256,21 +230,6 @@ function Area({ label, value, onChange, hint }: {
         className={`${inputCls} resize-y leading-relaxed`}
       />
       {hint && <span className="mt-1 block text-[11px] text-cream-dim/70">{hint}</span>}
-    </label>
-  );
-}
-
-function Select({ label, value, options, onChange }: {
-  label: string; value: string; options: string[]; onChange: (v: string) => void;
-}) {
-  return (
-    <label className="block">
-      <span className="text-[10px] uppercase tracking-[0.25em] text-cream-dim">{label}</span>
-      <select value={value} onChange={(e) => onChange(e.target.value)} className={inputCls}>
-        {options.map((o) => (
-          <option key={o} value={o} className="bg-ink">{o}</option>
-        ))}
-      </select>
     </label>
   );
 }

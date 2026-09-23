@@ -9,6 +9,10 @@ import { createClient } from "@/lib/supabase/client";
  *  go straight from the browser to Storage rather than through the server. */
 const SERVER_ACTION_BODY_LIMIT = 4.5 * 1024 * 1024;
 
+/** Supabase Storage rejects anything larger on the current plan. Checking here
+ *  turns a failed upload into an answer before the file is sent. */
+const STORAGE_FILE_LIMIT = 50 * 1024 * 1024;
+
 async function uploadVideoToStorage(file: File): Promise<string> {
   const supabase = createClient();
   const ext = file.name.split(".").pop()?.toLowerCase() || "mp4";
@@ -76,6 +80,15 @@ function VideoForm({ row, onClose }: { row?: Video; onClose: () => void }) {
         }
         const vid = fd.get("video");
         if (vid instanceof File && vid.size > 0) {
+          if (vid.size > STORAGE_FILE_LIMIT) {
+            const msg =
+              `this file is ${formatBytes(vid.size)}. storage accepts up to ` +
+              `${formatBytes(STORAGE_FILE_LIMIT)} per file. compress it further, ` +
+              `or upload it to youtube or vimeo and paste the link above instead.`;
+            setError(msg);
+            toast.error("video too large", msg);
+            return;
+          }
           if (vid.size > SERVER_ACTION_BODY_LIMIT) {
             toast.info("uploading video", `${formatBytes(vid.size)}. this can take a while.`);
           }
