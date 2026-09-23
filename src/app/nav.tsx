@@ -10,7 +10,6 @@ const LINKS = [
   { label: "videos", href: "#videos" },
   { label: "tour",   href: "#tour" },
   { label: "about",  href: "#about" },
-  { label: "press kit", href: "/epk" },
 ];
 
 export default function Nav() {
@@ -55,6 +54,14 @@ export default function Nav() {
           </ul>
 
           <div className="flex items-center gap-2">
+            <Link
+              href="/epk"
+              className="group hidden sm:inline-flex items-center gap-2 rounded-full bg-gold px-4 py-2 text-xs font-medium uppercase tracking-[0.2em] text-ink transition-colors hover:bg-cream"
+            >
+              press kit
+              <ArrowUpRight className="size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </Link>
+
             <a
               href="#music"
               className="group hidden sm:inline-flex items-center gap-2 rounded-full border border-cream/30 px-4 py-2 text-xs uppercase tracking-[0.2em] text-cream hover:bg-cream hover:text-ink transition-colors"
@@ -128,10 +135,19 @@ export default function Nav() {
             ))}
           </ul>
 
+          <Link
+            href="/epk"
+            onClick={() => setOpen(false)}
+            className="mt-auto inline-flex items-center justify-center gap-2 rounded-full bg-gold px-6 py-4 text-xs font-medium uppercase tracking-[0.2em] text-ink"
+          >
+            press kit
+            <ArrowUpRight className="size-3.5" />
+          </Link>
+
           <a
             href="#music"
             onClick={() => setOpen(false)}
-            className="mt-auto inline-flex items-center justify-center gap-2 rounded-full bg-cream px-6 py-4 text-xs font-medium uppercase tracking-[0.2em] text-ink"
+            className="mt-3 inline-flex items-center justify-center gap-2 rounded-full bg-cream px-6 py-4 text-xs font-medium uppercase tracking-[0.2em] text-ink"
           >
             listen now
             <ArrowUpRight className="size-3.5" />
