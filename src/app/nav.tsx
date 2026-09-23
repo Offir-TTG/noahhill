@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { ArrowUpRight, Menu, X } from "lucide-react";
 
 const LINKS = [
@@ -9,6 +10,7 @@ const LINKS = [
   { label: "videos", href: "#videos" },
   { label: "tour",   href: "#tour" },
   { label: "about",  href: "#about" },
+  { label: "press kit", href: "/epk" },
 ];
 
 export default function Nav() {
@@ -43,7 +45,11 @@ export default function Nav() {
           <ul className="hidden md:flex items-center gap-10 text-sm text-cream-dim">
             {LINKS.map((l) => (
               <li key={l.href}>
-                <a className="hover:text-cream transition" href={l.href}>{l.label}</a>
+                {l.href.startsWith("/") ? (
+                  <Link className="hover:text-cream transition" href={l.href}>{l.label}</Link>
+                ) : (
+                  <a className="hover:text-cream transition" href={l.href}>{l.label}</a>
+                )}
               </li>
             ))}
           </ul>
@@ -101,13 +107,23 @@ export default function Nav() {
                 className={`transition-all duration-500 ${open ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"}`}
                 style={{ transitionDelay: open ? `${100 + i * 60}ms` : "0ms" }}
               >
-                <a
-                  href={l.href}
-                  onClick={() => setOpen(false)}
-                  className="block py-4 font-display lowercase text-cream text-5xl"
-                >
-                  {l.label}
-                </a>
+                {l.href.startsWith("/") ? (
+                  <Link
+                    href={l.href}
+                    onClick={() => setOpen(false)}
+                    className="block py-4 font-display lowercase text-cream text-5xl"
+                  >
+                    {l.label}
+                  </Link>
+                ) : (
+                  <a
+                    href={l.href}
+                    onClick={() => setOpen(false)}
+                    className="block py-4 font-display lowercase text-cream text-5xl"
+                  >
+                    {l.label}
+                  </a>
+                )}
               </li>
             ))}
           </ul>

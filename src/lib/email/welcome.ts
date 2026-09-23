@@ -14,6 +14,10 @@ export function welcomeEmail() {
     bodyMd: [
       "# you're in.",
       "",
+      // Absolute URL: an email client has no site to resolve a relative path
+      // against. The template already styles images to fit the column.
+      `![Noah Hill](${SITE_URL}/images/Noah2.jpeg)`,
+      "",
       "Thanks for signing up. You'll hear it here first: new songs, release dates, and shows once they're booked.",
       "",
       "I don't send many of these, and your address stays with me.",
