@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Music2, Play, ArrowUpRight, MapPin } from "lucide-react";
 import CoverPlayer from "./cover-player";
 import SongList from "./song-list";
@@ -189,7 +190,7 @@ function LatestRelease({ content }: { content: SiteContent }) {
 
         <div className="mt-16 grid gap-12 lg:grid-cols-12 lg:gap-20 items-center">
           <div className="lg:col-span-5">
-            <CoverPlayer src={audioSrc} cover={cover} alt={`${content.single.title_line1} ${content.single.title_line2} — cover art`} />
+            <CoverPlayer src={audioSrc} cover={cover} alt={`${content.single.title_line1} ${content.single.title_line2} cover art`} />
             <p className="mt-4 text-xs uppercase tracking-[0.3em] text-cream-dim flex items-center gap-3">
               <span className="size-1.5 rounded-full bg-gold animate-pulse" />
               now playing on every platform
@@ -275,7 +276,7 @@ function Videos({ videos, fallbackImg }: { videos: Video[]; fallbackImg: string 
                 </div>
                 <div className="absolute inset-x-0 bottom-0 p-6">
                   <p className="text-[10px] uppercase tracking-[0.4em] text-cream-dim">
-                    {v.year ?? "—"} · {v.duration ?? "—"}
+                    {[v.year, v.duration].filter(Boolean).join(" · ") || "tbc"}
                   </p>
                   <h3 className="mt-2 font-display lowercase text-cream text-3xl font-medium">
                     {v.title}
@@ -317,7 +318,7 @@ function Tour({ rows }: { rows: TourDate[] }) {
                      className="grid grid-cols-12 gap-4 items-center py-6 px-2 hover:bg-cream/5 transition">
                     <span className="col-span-3 sm:col-span-2 font-display text-cream text-xl tracking-wide">{show.show_date}</span>
                     <span className="col-span-5 sm:col-span-4 font-display lowercase text-cream text-2xl sm:text-3xl">{show.city}</span>
-                    <span className="col-span-3 hidden sm:block text-cream-dim text-sm">{show.venue ?? "—"}</span>
+                    <span className="col-span-3 hidden sm:block text-cream-dim text-sm">{show.venue ?? "tbc"}</span>
                     <span className="col-span-1 hidden sm:flex items-center gap-1 text-xs uppercase tracking-[0.3em] text-cream-dim">
                       <MapPin className="size-3" /> {show.country ?? ""}
                     </span>
@@ -331,7 +332,7 @@ function Tour({ rows }: { rows: TourDate[] }) {
             </ul>
 
             <p className="mt-8 text-xs uppercase tracking-[0.3em] text-cream-dim">
-              more dates announced soon — sign up below to be the first to know.
+              more dates announced soon. sign up below to be the first to know.
             </p>
           </>
         )}
@@ -465,6 +466,12 @@ function Footer({ content }: { content: SiteContent }) {
           </ul>
 
           <div className="md:text-right text-xs text-cream-dim space-y-2">
+            <p>
+              <Link href="/epk" className="inline-flex items-center gap-1.5 uppercase tracking-[0.2em] hover:text-cream transition">
+                press kit
+                <ArrowUpRight className="size-3" />
+              </Link>
+            </p>
             <p><a href={`mailto:${content.footer.management_email}`} className="hover:text-cream transition">{content.footer.management_email}</a></p>
             <p><a href={`mailto:${content.footer.press_email}`} className="hover:text-cream transition">{content.footer.press_email}</a></p>
           </div>

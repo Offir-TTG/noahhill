@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Inter } from "next/font/google";
 import UIProviders from "@/components/ui-providers";
+import { SITE_URL } from "@/lib/site-url";
 import "./globals.css";
 
 const display = Bricolage_Grotesque({
@@ -22,6 +23,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  // Makes every relative OpenGraph and canonical URL resolve against the real
+  // domain instead of localhost.
+  metadataBase: new URL(SITE_URL),
   title: "Noah Hill — Official Site",
   description:
     "The official home of Noah Hill. Listen to the new single 'hurt somebody', watch videos, and find tour dates.",

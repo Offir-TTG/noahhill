@@ -26,9 +26,21 @@ export type SupabaseConfig = {
   note?: string;
 };
 
+/**
+ * Spotify Web API, used for the press kit's live follower count.
+ * Note: the Web API does not expose monthly listeners or total streams.
+ */
+export type SpotifyConfig = {
+  client_id: string;
+  client_secret: string;
+  /** Artist id, or the full open.spotify.com artist URL. */
+  artist_id: string;
+};
+
 export type ConnectionConfigs = {
   smtp: SmtpConfig;
   supabase: SupabaseConfig;
+  spotify: SpotifyConfig;
   // future: stripe: { secret_key: string; publishable_key: string };
   // future: mailchimp: { api_key: string; list_id: string };
 };

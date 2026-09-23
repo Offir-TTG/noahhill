@@ -151,8 +151,8 @@ async function main() {
       copy: "Pre-saves, unreleased demos, ticket pre-sales — sent rarely, never spammy.",
     },
     footer: {
-      management_email: "management@noahhillmusic.com",
-      press_email: "press@noahhillmusic.com",
+      management_email: "management@noahill.com",
+      press_email: "press@noahill.com",
       socials: [
         { name: "Instagram",   url: "#" },
         { name: "YouTube",     url: "#" },

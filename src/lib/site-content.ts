@@ -58,7 +58,7 @@ export const DEFAULT_CONTENT: SiteContent = {
     title_line1: "hurt",
     title_line2: "somebody",
     description:
-      "A late-night confession dressed in hushed drums and warm tape saturation — the first taste of what's coming.",
+      "A late-night confession dressed in hushed drums and warm tape saturation. The first taste of what's coming.",
     cover_url: "/images/noah-hero.jpeg",
     streaming: [
       { name: "Spotify",     url: "#" },
@@ -71,7 +71,7 @@ export const DEFAULT_CONTENT: SiteContent = {
     tagline_line1: "quiet songs",
     tagline_line2: "for loud nights.",
     bio: [
-      "Noah Hill writes the kind of songs that sit inside a room with you — close, unhurried, and honest.",
+      "Noah Hill writes the kind of songs that sit inside a room with you: close, unhurried, and honest.",
       "His debut single \"hurt somebody\" arrived as a meditation on the small cruelties we don't talk about. A debut EP follows later this year.",
     ],
     portrait_url: "/images/noah-hero.jpeg",
@@ -84,11 +84,11 @@ export const DEFAULT_CONTENT: SiteContent = {
   newsletter: {
     eyebrow: "stay close",
     heading: "new music. early.",
-    copy: "Pre-saves, unreleased demos, ticket pre-sales — sent rarely, never spammy.",
+    copy: "Pre-saves, unreleased demos, ticket pre-sales. Sent rarely, never spammy.",
   },
   footer: {
-    management_email: "management@noahhillmusic.com",
-    press_email: "press@noahhillmusic.com",
+    management_email: "management@noahill.com",
+    press_email: "press@noahill.com",
     socials: [
       { name: "Instagram", url: "#" },
       { name: "YouTube",   url: "#" },

@@ -57,7 +57,7 @@ ${opts.preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacit
         <!-- Footer -->
         <tr>
           <td style="padding:24px 32px 32px;border-top:1px solid rgba(255,255,255,0.06);font-size:12px;color:#9c8c70;line-height:1.6;">
-            <p style="margin:0 0 8px;color:#9c8c70;">you're receiving this because you signed up at <a href="${escapeHtml(opts.siteUrl)}" style="color:#e8d9bd;">noahhillmusic.com</a>.</p>
+            <p style="margin:0 0 8px;color:#9c8c70;">you're receiving this because you signed up at <a href="${escapeHtml(opts.siteUrl)}" style="color:#e8d9bd;">noahill.com</a>.</p>
             <p style="margin:0;color:#9c8c70;">
               <a href="${escapeHtml(opts.unsubscribeUrl)}" style="color:#9c8c70;text-decoration:underline;">unsubscribe</a>
               · noah hill · 2026

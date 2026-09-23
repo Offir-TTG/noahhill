@@ -82,7 +82,7 @@ export default async function UnsubscribePage({
               <h1 className="mt-6 font-display lowercase text-cream text-2xl">something went wrong.</h1>
               <p className="mt-3 text-sm text-cream-dim leading-relaxed">
                 we couldn&apos;t complete the unsubscribe. please try again, or email
-                <a href="mailto:hello@noahhillmusic.com" className="text-cream underline ml-1">hello@noahhillmusic.com</a>.
+                <a href="mailto:hello@noahill.com" className="text-cream underline ml-1">hello@noahill.com</a>.
               </p>
               {errorMsg && <p className="mt-2 text-xs text-red-300/80">{errorMsg}</p>}
             </>

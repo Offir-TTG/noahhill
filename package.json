@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "seed": "node scripts/seed.mjs",
+    "epk:pdf": "node scripts/epk-pdf.mjs",
     "migrate-env": "node scripts/migrate-env-to-db.mjs"
   },
   "dependencies": {

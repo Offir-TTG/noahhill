@@ -42,3 +42,6 @@ supabase/migrations/0005_connections.sql
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Contains live credentials seeded from .env.local (see the warning in the file).
+supabase/sql/0005_connections.sql

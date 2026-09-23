@@ -5,6 +5,10 @@ const supabaseHostname = supabaseUrl ? new URL(supabaseUrl).hostname : null;
 
 const nextConfig: NextConfig = {
   images: {
+    // 75 is the default the site uses; 50 is for the printed press kit, where
+    // Chrome re-encodes every image losslessly and a softer source compresses
+    // far smaller for no visible loss at print size.
+    qualities: [50, 75],
     remotePatterns: supabaseHostname
       ? [
           {

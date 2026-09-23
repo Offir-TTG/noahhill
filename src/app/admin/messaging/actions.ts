@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { SITE_URL } from "@/lib/site-url";
 import { getTransporter, fromAddress, verifySmtp } from "@/lib/email/transport";
 import { renderEmail } from "@/lib/email/template";
 import { extractStorageUrlsFromMarkdown, removeStorageFiles } from "@/lib/storage";

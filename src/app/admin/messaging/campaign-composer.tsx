@@ -305,7 +305,7 @@ export default function CampaignComposer({ initial }: { initial: Campaign }) {
                 dangerouslySetInnerHTML={{ __html: previewHtml }}
               />
               <div className="px-4 sm:px-6 py-4 border-t border-white/10 text-[11px] text-cream-dim">
-                <p>you&apos;re receiving this because you signed up at noahhillmusic.com.</p>
+                <p>you&apos;re receiving this because you signed up at noahill.com.</p>
                 <p className="mt-1"><span className="underline">unsubscribe</span> · noah hill</p>
               </div>
             </div>

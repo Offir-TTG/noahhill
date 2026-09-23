@@ -19,9 +19,11 @@ type Props = {
   src: string;        // audio file, e.g. "/hurt-somebody.mp3"
   cover: string;      // image src
   alt: string;
+  sizes?: string;     // overridden by the press kit's print pass
+  quality?: number;
 };
 
-export default function CoverPlayer({ src, cover, alt }: Props) {
+export default function CoverPlayer({ src, cover, alt, sizes, quality }: Props) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);   // 0..1
@@ -85,7 +87,8 @@ export default function CoverPlayer({ src, cover, alt }: Props) {
           src={cover}
           alt={alt}
           fill
-          sizes="(min-width: 1024px) 40vw, 90vw"
+          sizes={sizes ?? "(min-width: 1024px) 40vw, 90vw"}
+          quality={quality}
           className="object-cover transition-transform duration-700 group-hover:scale-105"
         />
         <div className="absolute inset-0 ring-1 ring-inset ring-cream/10" />
@@ -97,9 +100,9 @@ export default function CoverPlayer({ src, cover, alt }: Props) {
           }`}
         />
 
-        {/* Wave-style centered play / pause icon — no background */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          {/* Pulsing wave rings — only while playing */}
+        {/* Wave-style centered play / pause icon, no background */}
+        <div className="no-print absolute inset-0 flex items-center justify-center">
+          {/* Pulsing wave rings, only while playing */}
           {playing && (
             <>
               <span className="absolute size-20 rounded-full ring-1 ring-cream/40 animate-wave-ping" />
@@ -116,7 +119,7 @@ export default function CoverPlayer({ src, cover, alt }: Props) {
           </span>
         </div>
 
-        {/* "now playing" pill — only when playing */}
+        {/* "now playing" pill, only when playing */}
         {playing && (
           <div className="absolute top-4 left-4 flex items-center gap-2 rounded-full bg-ink/70 backdrop-blur px-3 py-1.5 text-[10px] uppercase tracking-[0.3em] text-cream">
             <span className="size-1.5 rounded-full bg-gold animate-pulse" />
@@ -125,8 +128,8 @@ export default function CoverPlayer({ src, cover, alt }: Props) {
         )}
       </button>
 
-      {/* Scrubber + time */}
-      <div className="mt-4 select-none">
+      {/* Scrubber + time: interactive only, hidden in the printed press kit */}
+      <div className="no-print mt-4 select-none">
         <div
           className="relative h-1 w-full cursor-pointer rounded-full bg-cream/15"
           onClick={seek}

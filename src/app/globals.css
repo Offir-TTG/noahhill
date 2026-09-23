@@ -7,7 +7,7 @@
   --steel: #16242c;          /* raised surfaces / cards */
   --teal-shadow: #2a4751;    /* subtle teal glow */
   --teal-glow: #4a7c85;      /* highlight teal */
-  --cream: #e8d9bd;          /* primary text — warm */
+  --cream: #e8d9bd;          /* primary text, warm */
   --cream-dim: #b5a586;      /* muted text */
   --gold: #c8b27f;           /* accent / buttons */
 }
@@ -127,3 +127,168 @@ html { scroll-behavior: smooth; }
 /* Hide scrollbar on horizontal strips */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; }
+
+/* ──────────────────────────────────────────────────────────────
+ * PRINT / PDF
+ * The press kit at /epk is distributed as a PDF. Browser
+ * "Save as PDF" (and headless Chrome --print-to-pdf) both use
+ * these rules, so the output is a paginated document rather
+ * than a screenshot of a web page.
+ * ────────────────────────────────────────────────────────────── */
+@page {
+  size: A4;
+  margin: 0;
+}
+
+@media print {
+  /* Keep the dark palette: the kit is designed for it. */
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  html, body {
+    background: var(--ink) !important;
+    width: 100%;
+  }
+
+  /* Freeze every entrance/ambient animation at its resting state. */
+  .animate-rise,
+  .animate-drift,
+  .animate-drift-slow,
+  .animate-marquee,
+  .animate-vinyl-spin,
+  .animate-eq-bar,
+  .animate-wave-ping,
+  .animate-wave-ping-2,
+  .animate-pulse {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* Chrome cannot rasterise large blurred halos cleanly across page
+     boundaries, so drop them and keep the flat backgrounds. */
+  .halo { display: none !important; }
+
+  /* The film grain sits on mix-blend-mode: overlay, which forces Chrome to
+     flatten everything beneath it into one lossless bitmap. That alone added
+     megabytes of Flate-encoded image data to the PDF, and at 8% opacity the
+     grain is invisible on the page anyway. */
+  .grain::before { display: none !important; }
+  .grain { isolation: auto !important; }
+
+  /* Interactive-only chrome: nav, buttons, hover overlays, toasts, dev overlay. */
+  .no-print,
+  header.fixed,
+  [aria-live="polite"],
+  nextjs-portal { display: none !important; }
+
+  /* Paper is tighter than a scrolling page: trim the vertical rhythm. */
+  /* 1.5rem rather than 1.75: the press block was overshooting its page
+     boundary by a handful of pixels and being pushed to the next sheet, which
+     left a large gap behind it. */
+  section { padding-top: 1.5rem !important; padding-bottom: 1.5rem !important; }
+  .mt-14, .mt-16 { margin-top: 1.5rem !important; }
+  .mt-20 { margin-top: 2rem !important; }
+  .py-20, .py-24 { padding-top: 2rem !important; padding-bottom: 2rem !important; }
+
+  /* Chrome fragments CSS grid badly across printed pages: a row taller than the
+     remaining space gets pushed whole, and its children keep their column offset,
+     which leaves half-empty sheets with text stranded in one column. So the
+     multi-column splits collapse to plain block flow for print, which paginates
+     cleanly, and the images they hold are capped so a single photo cannot eat a
+     sheet on its own. */
+  .epk-split { display: block !important; }
+  .epk-split > * { grid-column: auto !important; width: auto !important; }
+  .epk-split > * + * { margin-top: 0 !important; }
+
+  /* Block flow alone would park the portrait on its own line with the whole
+     right half of the sheet empty. Floating it lets the heading and copy run
+     alongside, and unlike grid a float fragments across pages cleanly. */
+  .epk-print-cap {
+    float: left !important;
+    width: 190px !important;
+    max-width: 190px !important;
+    margin: 0 1.5rem 0.75rem 0 !important;
+    shape-outside: margin-box;
+  }
+
+  /* Short blocks that look broken when fragmented: the live state strands its
+     eyebrow and clips the heading, the photo grid cuts a row of images in half,
+     and the footer orphans its copyright line onto a page of its own. Each
+     fits within a sheet, so each moves whole instead. */
+  #press,
+  #live,
+  #contact,
+  .epk-photo-grid,
+  footer { break-inside: avoid; page-break-inside: avoid; }
+
+  /* The press block clears its page boundary by only a few pixels, and the
+     atomic discography rows above it push it over. Tightening its own spacing
+     buys back the headroom so it stays on the page instead of moving to the
+     next one and leaving a gap behind it. */
+  #press { padding-top: 0.75rem !important; padding-bottom: 0.75rem !important; }
+  #press .mt-14 { margin-top: 0.75rem !important; }
+  #press .py-20, #press .py-24 { padding-top: 1rem !important; padding-bottom: 1rem !important; }
+
+  /* Wide letter-spacing pushes each photo credit onto three lines and makes the
+     contact sheet look ragged. Tighten it for paper only. */
+  .epk-photo-grid figcaption p { letter-spacing: 0.08em !important; }
+
+  /* Chrome only matches Tailwind's sm: breakpoint when laying out for print,
+     so md:/lg: column counts never apply and every card would print full width
+     (a single video still would take most of a sheet). Pin them explicitly.
+     These grids are all short enough to fit a page, so they fragment safely. */
+  .epk-grid-2       { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .epk-grid-3       { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+  .epk-grid-4       { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+  .epk-grid-5       { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
+  .epk-photo-grid   { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+  .epk-grid-2 > *, .epk-grid-3 > *, .epk-grid-4 > *, .epk-grid-5 > * {
+    grid-column: auto !important;
+  }
+
+  /* No forced section breaks beyond the cover. Every one of them ends a sheet
+     early, and the kit is short enough to read as a continuous document. */
+
+  /* A bordered card that splits across a page boundary prints as an open-ended
+     box with no top edge. The biography is the only block long enough to need
+     splitting, so for print it drops its card chrome and flows as plain text,
+     where a page break is invisible. */
+  .epk-prose {
+    border: 0 !important;
+    background: none !important;
+    padding: 0 !important;
+  }
+
+  /* Everything else is short enough to move to the next sheet whole rather than
+     fragment: images, quotes, table rows, and the cards inside the pinned grids. */
+  figure, blockquote, dl > div, li,
+  .epk-grid-2 > *, .epk-grid-3 > * {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* A numbered section label stranded at the foot of a sheet, with its heading
+     over the page, reads as a mistake. Keep it with what it introduces. */
+  h1, h2, h3, .epk-section-label { break-after: avoid; page-break-after: avoid; }
+
+  /* Cover page: let the hero own a full sheet. */
+  .epk-cover {
+    min-height: 96vh !important;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  /* Hover-only transforms would otherwise print mid-transition. */
+  img { transform: none !important; }
+
+  /* Show link targets that a reader cannot click on paper. */
+  .print-url::after {
+    content: " (" attr(data-url) ")";
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    color: var(--cream-dim);
+  }
+}

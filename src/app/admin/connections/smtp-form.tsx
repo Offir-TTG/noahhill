@@ -125,7 +125,7 @@ export default function SmtpForm({ initial }: Props) {
 
       <div className="grid sm:grid-cols-2 gap-3">
         <Field label="from name"  value={fromName}  onChange={setFromName}  placeholder="Noah Hill" />
-        <Field label="from email" value={fromEmail} onChange={setFromEmail} placeholder="hello@noahhillmusic.com" />
+        <Field label="from email" value={fromEmail} onChange={setFromEmail} placeholder="hello@noahill.com" />
       </div>
 
       {testResult && (
