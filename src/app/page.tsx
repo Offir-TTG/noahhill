@@ -5,6 +5,7 @@ import CoverPlayer from "./cover-player";
 import SongList from "./song-list";
 import Nav from "./nav";
 import SubscribeForm from "./subscribe-form";
+import Visuals from "./visuals";
 import { createClient } from "@/lib/supabase/server";
 import { mergeContent, type SiteContent } from "@/lib/site-content";
 
@@ -247,45 +248,23 @@ function Discography({ songs }: { songs: { title: string; year: string; duration
   );
 }
 
-/* ---------- VIDEOS ---------- */
+/* ---------- VISUALS ---------- */
 function Videos({ videos, fallbackImg }: { videos: Video[]; fallbackImg: string }) {
+  if (videos.length === 0) return null;
   return (
     <section id="videos" className="relative bg-ink py-28 sm:py-40">
       <div className="mx-auto max-w-7xl px-6 sm:px-10">
         <SectionLabel index="03" title="visuals" />
-        <div className="mt-16 grid gap-6 md:grid-cols-3">
-          {videos.map((v, i) => {
-            const thumb = v.thumbnail_url ?? (i === 0 ? fallbackImg : null);
-            return (
-              <a key={v.title + i} href={v.video_url ?? "#"} target={v.video_url?.startsWith("http") ? "_blank" : undefined}
-                 className="group relative aspect-[4/5] overflow-hidden rounded-sm bg-steel">
-                {thumb ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img src={thumb} alt={v.title} className="absolute inset-0 size-full object-cover opacity-80 transition-all duration-700 group-hover:scale-105 group-hover:opacity-100" />
-                ) : (
-                  <div
-                    className="absolute inset-0 transition-transform duration-700 group-hover:scale-105"
-                    style={{ background: i === 1
-                        ? "linear-gradient(135deg, #16242c 0%, #2a4751 60%, #4a7c85 100%)"
-                        : "linear-gradient(160deg, #0c1419 0%, #16242c 50%, #c8b27f 140%)" }}
-                  />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/30 to-transparent" />
-                <div className="absolute top-5 right-5 size-12 rounded-full border border-cream/30 backdrop-blur-sm flex items-center justify-center group-hover:bg-cream group-hover:border-cream transition">
-                  <Play className="size-4 fill-cream text-cream group-hover:fill-ink group-hover:text-ink transition" />
-                </div>
-                <div className="absolute inset-x-0 bottom-0 p-6">
-                  <p className="text-[10px] uppercase tracking-[0.4em] text-cream-dim">
-                    {[v.year, v.duration].filter(Boolean).join(" · ") || "tbc"}
-                  </p>
-                  <h3 className="mt-2 font-display lowercase text-cream text-3xl font-medium">
-                    {v.title}
-                  </h3>
-                </div>
-              </a>
-            );
-          })}
-        </div>
+        <Visuals
+          items={videos.map((v) => ({
+            title: v.title,
+            year: v.year,
+            duration: v.duration,
+            thumbnail_url: v.thumbnail_url,
+            video_url: v.video_url,
+          }))}
+          fallbackImg={fallbackImg}
+        />
       </div>
     </section>
   );

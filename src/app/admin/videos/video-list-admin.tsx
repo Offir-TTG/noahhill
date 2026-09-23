@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { visualKind } from "@/lib/media";
 import { Pencil, Trash2, Plus, Save, X, Film } from "lucide-react";
 import { createVideo, updateVideo, deleteVideo } from "./actions";
 import { useToast } from "@/components/toast";
@@ -18,6 +19,12 @@ export type Video = {
 
 function VideoForm({ row, onClose }: { row?: Video; onClose: () => void }) {
   const isEdit = !!row;
+  // Existing rows have no stored type, so derive it the same way the public
+  // page does: no video url (or an image in it) means this is a photo.
+  const initialKind = row && visualKind(row) !== "image" ? "video" : "photo";
+  const [kind, setKind] = useState<"photo" | "video">(initialKind);
+  // An image sitting in the video field should not be offered back as a url.
+  const externalUrl = row && visualKind(row) === "external" ? (row.video_url ?? "") : "";
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const toast = useToast();
@@ -50,6 +57,33 @@ function VideoForm({ row, onClose }: { row?: Video; onClose: () => void }) {
         </button>
       </div>
 
+      <div>
+        <span className="text-[10px] uppercase tracking-[0.3em] text-cream-dim">type</span>
+        <div className="mt-2 flex gap-2">
+          {(["photo", "video"] as const).map((k) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => setKind(k)}
+              className={`rounded-full px-4 py-1.5 text-[10px] uppercase tracking-[0.2em] transition ${
+                kind === k
+                  ? "bg-cream text-ink"
+                  : "border border-cream/20 text-cream-dim hover:border-cream/50 hover:text-cream"
+              }`}
+            >
+              {k}
+            </button>
+          ))}
+        </div>
+        <p className="mt-2 text-[11px] leading-relaxed text-cream-dim/70">
+          {kind === "photo"
+            ? "a still. no play button, and nothing to click on the site."
+            : "upload a file to play it on the page, or paste a youtube/vimeo link to open it in a new tab."}
+        </p>
+      </div>
+
+      <input type="hidden" name="kind" value={kind} />
+
       <Field label="title" name="title" defaultValue={row?.title ?? ""} required placeholder="hurt somebody" />
 
       <div className="grid grid-cols-3 gap-3">
@@ -58,11 +92,16 @@ function VideoForm({ row, onClose }: { row?: Video; onClose: () => void }) {
         <Field label="sort" name="sort_order" type="number" defaultValue={String(row?.sort_order ?? 0)} />
       </div>
 
-      <Field label="external video url (youtube, vimeo, …)" name="video_url" type="url" defaultValue={row?.video_url ?? ""} placeholder="https://youtube.com/watch?v=…" />
+      {kind === "video" ? (
+        <Field label="external video url (youtube, vimeo, …)" name="video_url" type="url" defaultValue={externalUrl} placeholder="https://youtube.com/watch?v=…" />
+      ) : (
+        <input type="hidden" name="video_url" value="" />
+      )}
 
       <div>
         <label className="text-[10px] uppercase tracking-[0.3em] text-cream-dim">
-          thumbnail image {isEdit && <span className="text-cream-dim/60 normal-case tracking-normal">(leave empty to keep current)</span>}
+          {kind === "photo" ? "image" : "poster image"}{" "}
+          {isEdit && <span className="text-cream-dim/60 normal-case tracking-normal">(leave empty to keep current)</span>}
         </label>
         <input
           name="thumbnail"
@@ -77,14 +116,15 @@ function VideoForm({ row, onClose }: { row?: Video; onClose: () => void }) {
         )}
       </div>
 
-      <div>
+      <div className={kind === "video" ? "" : "hidden"}>
         <label className="text-[10px] uppercase tracking-[0.3em] text-cream-dim">
-          self-hosted video file (optional — overrides external url)
+          video file (optional, overrides the url above)
         </label>
         <input
           name="video"
           type="file"
           accept="video/*"
+          disabled={kind !== "video"}
           className="mt-1 w-full text-xs text-cream-dim file:mr-3 file:rounded-sm file:border-0 file:bg-cream file:px-3 file:py-2 file:text-[10px] file:uppercase file:tracking-[0.2em] file:text-ink file:cursor-pointer hover:file:bg-gold"
         />
       </div>

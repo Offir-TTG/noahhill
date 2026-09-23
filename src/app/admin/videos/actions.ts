@@ -35,8 +35,9 @@ export async function createVideo(formData: FormData) {
   let thumbnail_url: string | null = null;
   if (thumb && thumb.size > 0) thumbnail_url = await uploadFile("images", thumb);
 
-  let video_url: string | null = externalVideoUrl;
-  if (video && video.size > 0) video_url = await uploadFile("videos", video);
+  const kind = String(formData.get("kind") ?? "video");
+  let video_url: string | null = kind === "photo" ? null : externalVideoUrl;
+  if (kind !== "photo" && video && video.size > 0) video_url = await uploadFile("videos", video);
 
   const { error } = await supabase
     .from("videos")
@@ -66,10 +67,19 @@ export async function updateVideo(id: string, formData: FormData) {
     .eq("id", id)
     .maybeSingle();
 
+  const kind = String(formData.get("kind") ?? "video");
   const updates: Record<string, unknown> = { title, year, duration, sort_order };
   if (thumb && thumb.size > 0) updates.thumbnail_url = await uploadFile("images", thumb);
-  if (video && video.size > 0) updates.video_url = await uploadFile("videos", video);
-  else if (externalVideoUrl) updates.video_url = externalVideoUrl;
+
+  if (kind === "photo") {
+    // Switching a video to a photo has to null the column. Leaving it unset
+    // would keep the old url and the row would still render as a video.
+    updates.video_url = null;
+  } else if (video && video.size > 0) {
+    updates.video_url = await uploadFile("videos", video);
+  } else if (externalVideoUrl) {
+    updates.video_url = externalVideoUrl;
+  }
 
   const { error } = await supabase.from("videos").update(updates).eq("id", id);
   if (error) throw new Error(error.message);
@@ -78,7 +88,7 @@ export async function updateVideo(id: string, formData: FormData) {
   if (updates.thumbnail_url && previous?.thumbnail_url && previous.thumbnail_url !== updates.thumbnail_url) {
     await removeStorageFile(previous.thumbnail_url);
   }
-  if (updates.video_url && previous?.video_url && previous.video_url !== updates.video_url) {
+  if ("video_url" in updates && previous?.video_url && previous.video_url !== updates.video_url) {
     await removeStorageFile(previous.video_url);
   }
 
