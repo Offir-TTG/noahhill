@@ -13,22 +13,25 @@ import CopyText from "./copy-text";
 import EpkNav from "./epk-nav";
 import { createClient } from "@/lib/supabase/server";
 import { mergeContent, type SiteContent } from "@/lib/site-content";
-import { EPK_CONTENT, type PressPhoto } from "@/lib/epk-content";
+import { mergeEpk, type EpkContent, type PressPhoto } from "@/lib/epk-content";
 import { formatCount, getSpotifyArtist, type SpotifyArtistStats } from "@/lib/spotify";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Noah Hill Press Kit",
-  description: EPK_CONTENT.bios.one_line,
-  openGraph: {
-    title: "Noah Hill Electronic Press Kit",
-    description: EPK_CONTENT.bios.one_line,
-    type: "profile",
-  },
-  alternates: { canonical: "/epk" },
-  robots: { index: true, follow: true },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { epk } = await loadAll();
+  return {
+    title: "Noah Hill Press Kit",
+    description: epk.bios.one_line,
+    openGraph: {
+      title: "Noah Hill Electronic Press Kit",
+      description: epk.bios.one_line,
+      type: "profile",
+    },
+    alternates: { canonical: "/epk" },
+    robots: { index: true, follow: true },
+  };
+}
 
 type Song  = { title: string; year: string | null; duration: string | null; audio_url: string | null; cover_url: string | null };
 type TourDate = { show_date: string; city: string; venue: string | null; country: string | null; ticket_url: string | null };
@@ -41,13 +44,15 @@ async function loadAll() {
       supabase.from("songs").select("*").order("sort_order").order("created_at"),
       supabase.from("tour_dates").select("*").order("sort_order").order("created_at"),
     ]);
+    const raw = (contentRes.data?.data ?? null) as (Partial<SiteContent> & { epk?: Partial<EpkContent> }) | null;
     return {
-      content: mergeContent((contentRes.data?.data ?? null) as Partial<SiteContent> | null),
+      content: mergeContent(raw),
+      epk: mergeEpk(raw?.epk ?? null),
       songs:  (songsRes.data  as Song[]     | null) ?? [],
       tour:   (tourRes.data   as TourDate[] | null) ?? [],
     };
   } catch {
-    return { content: mergeContent(null), songs: [], tour: [] };
+    return { content: mergeContent(null), epk: mergeEpk(null), songs: [], tour: [] };
   }
 }
 
@@ -103,11 +108,11 @@ function downloadUrl(url: string, filename: string) {
  * of their own and resolve to the matching song's artwork, so the kit stays in
  * step with whatever the admin has uploaded.
  */
-function resolvePhotos(content: SiteContent, songs: Song[]): (PressPhoto & { url: string })[] {
+function resolvePhotos(epk: EpkContent, content: SiteContent, songs: Song[]): (PressPhoto & { url: string })[] {
   const coverFor = (title: string) =>
     songs.find((s) => s.title.toLowerCase() === title.toLowerCase())?.cover_url ?? null;
 
-  return EPK_CONTENT.photos
+  return epk.photos
     .map((p) => ({
       ...p,
       url: p.url ?? (p.fromSong ? coverFor(p.fromSong) : null) ?? content.hero.photo_url ?? null,
@@ -118,11 +123,11 @@ function resolvePhotos(content: SiteContent, songs: Song[]): (PressPhoto & { url
 export default async function EpkPage(props: PageProps<"/epk">) {
   const print = (await props.searchParams).print === "1";
   const img: ImgOpts = { print };
-  const [{ content, songs, tour }, spotify] = await Promise.all([
+  const [{ content, epk, songs, tour }, spotify] = await Promise.all([
     loadAll(),
     getSpotifyArtist(),
   ]);
-  const photos = resolvePhotos(content, songs);
+  const photos = resolvePhotos(epk, content, songs);
   const hasPdf = pdfExists();
 
   const fallbackCover = content.single.cover_url ?? content.hero.photo_url ?? null;
@@ -139,30 +144,30 @@ export default async function EpkPage(props: PageProps<"/epk">) {
   return (
     <>
       <EpkNav />
-      <Hero content={content} photos={photos} hasPdf={hasPdf} img={img} />
-      <Facts />
+      <Hero content={content} epk={epk} photos={photos} hasPdf={hasPdf} img={img} />
+      <Facts epk={epk} />
       <Bio content={content} img={img} />
       <Music content={content} songs={songsForList} img={img} />
-      <Press />
-      <Numbers content={content} spotify={spotify} />
-      <Live tour={tour} />
+      <Press epk={epk} />
+      <Numbers content={content} epk={epk} spotify={spotify} />
+      <Live tour={tour} epk={epk} />
       <Photos photos={photos} img={img} />
-      <Contact content={content} hasPdf={hasPdf} />
-      <EpkFooter hasPdf={hasPdf} />
+      <Contact epk={epk} content={content} hasPdf={hasPdf} />
+      <EpkFooter epk={epk} hasPdf={hasPdf} />
     </>
   );
 }
 
 /* ---------- HERO ---------- */
 function Hero({
-  content, photos, hasPdf, img,
+  content, epk, photos, hasPdf, img,
 }: {
   content: SiteContent;
+  epk: EpkContent;
   photos: (PressPhoto & { url: string })[];
   hasPdf: boolean;
   img: ImgOpts;
 }) {
-  const epk = EPK_CONTENT;
   const photo = content.hero.photo_url ?? "/images/noah-hero.jpeg";
 
   return (
@@ -272,12 +277,12 @@ function Hero({
 }
 
 /* ---------- AT A GLANCE ---------- */
-function Facts() {
+function Facts({ epk }: { epk: EpkContent }) {
   return (
     <section className="border-y border-white/5 bg-midnight">
       <div className="mx-auto max-w-7xl px-6 sm:px-10">
         <div className="epk-grid-4 grid grid-cols-2 gap-px bg-white/5 md:grid-cols-4">
-          {EPK_CONTENT.facts.map((f) => (
+          {epk.facts.map((f) => (
             <div key={f.label} className="bg-midnight px-1 py-7 sm:px-4">
               <p className="text-[10px] uppercase tracking-[0.35em] text-cream-dim/70">{f.label}</p>
               <p className="mt-2 text-sm leading-snug text-cream">{f.value}</p>
@@ -291,9 +296,11 @@ function Facts() {
 
 /* ---------- 01 · BIOGRAPHY ---------- */
 function Bio({ content, img }: { content: SiteContent; img: ImgOpts }) {
-  const { bios } = EPK_CONTENT;
+  // Single source of truth: the same paragraphs the homepage About section
+  // renders, so the kit and the site can never carry different bios.
   const portrait = content.about.portrait_url ?? "/images/noah-hero.jpeg";
-  const longText = bios.long.join("\n\n");
+  const paragraphs = content.about.bio;
+  const longText = paragraphs.join("\n\n");
 
   return (
     <section id="bio" className="relative scroll-mt-24 bg-ink py-24 sm:py-36">
@@ -327,7 +334,7 @@ function Bio({ content, img }: { content: SiteContent; img: ImgOpts }) {
           <div className="lg:col-span-8">
             <BioBlock label="biography" text={longText}>
               <div className="space-y-4 leading-relaxed text-cream-dim">
-                {bios.long.map((p, i) => (
+                {paragraphs.map((p, i) => (
                   <p key={i}>{p}</p>
                 ))}
               </div>
@@ -457,8 +464,8 @@ function Music({
 }
 
 /* ---------- 03 · PRESS ---------- */
-function Press() {
-  const { quotes } = EPK_CONTENT;
+function Press({ epk }: { epk: EpkContent }) {
+  const { quotes } = epk;
 
   return (
     <section id="press" className="relative scroll-mt-24 bg-ink py-24 sm:py-36">
@@ -522,15 +529,16 @@ function Press() {
 
 /* ---------- BY THE NUMBERS ---------- */
 function Numbers({
-  content, spotify,
+  content, epk, spotify,
 }: {
   content: SiteContent;
+  epk: EpkContent;
   spotify: SpotifyArtistStats | null;
 }) {
   // A figure with a source is replaced by the live value; if Spotify is
   // unconfigured or down, its static value is used instead so the row never
   // renders a hole.
-  const live = (n: (typeof EPK_CONTENT.numbers)[number]) => {
+  const live = (n: EpkContent["numbers"][number]) => {
     if (!spotify) return { value: n.value, note: n.note, isLive: false };
     if (n.source === "spotify_followers") {
       return { value: formatCount(spotify.followers), note: n.note, isLive: true };
@@ -544,7 +552,7 @@ function Numbers({
   // Site stats first (kept current by the admin), then press-only platform numbers.
   const rows = [
     ...content.about.stats.map((s) => ({ value: s.value, label: s.label, note: undefined as string | undefined, isLive: false })),
-    ...EPK_CONTENT.numbers
+    ...epk.numbers
       .filter((n) => !content.about.stats.some((s) => s.label.toLowerCase() === n.label.toLowerCase()))
       .map((n) => ({ label: n.label, ...live(n) }))
       .filter((r) => r.value !== ""),
@@ -584,8 +592,8 @@ function Numbers({
 }
 
 /* ---------- 04 · LIVE & TECHNICAL ---------- */
-function Live({ tour }: { tour: TourDate[] }) {
-  const { live } = EPK_CONTENT;
+function Live({ tour, epk }: { tour: TourDate[]; epk: EpkContent }) {
+  const { live } = epk;
 
   return (
     <section id="live" className="relative grain scroll-mt-24 overflow-hidden bg-midnight py-24 sm:py-36">
@@ -710,8 +718,8 @@ const SOCIAL_ICONS: Record<string, React.FC<React.SVGProps<SVGSVGElement>>> = {
 };
 
 /* ---------- 06 · CONTACT ---------- */
-function Contact({ content, hasPdf }: { content: SiteContent; hasPdf: boolean }) {
-  const contacts = EPK_CONTENT.contacts;
+function Contact({ epk, content, hasPdf }: { epk: EpkContent; content: SiteContent; hasPdf: boolean }) {
+  const contacts = epk.contacts;
 
   return (
     <section id="contact" className="relative scroll-mt-24 bg-ink py-24 sm:py-36">
@@ -785,7 +793,7 @@ function Contact({ content, hasPdf }: { content: SiteContent; hasPdf: boolean })
 }
 
 /* ---------- FOOTER ---------- */
-function EpkFooter({ hasPdf }: { hasPdf: boolean }) {
+function EpkFooter({ epk, hasPdf }: { epk: EpkContent; hasPdf: boolean }) {
   return (
     <footer className="border-t border-white/5 bg-ink">
       <div className="mx-auto max-w-7xl px-6 py-14 sm:px-10">
@@ -793,7 +801,7 @@ function EpkFooter({ hasPdf }: { hasPdf: boolean }) {
           <div>
             <p className="font-display text-2xl lowercase text-cream">noah hill</p>
             <p className="mt-3 text-xs uppercase tracking-[0.3em] text-cream-dim">
-              electronic press kit · {EPK_CONTENT.meta.updated}
+              electronic press kit · {epk.meta.updated}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-6">

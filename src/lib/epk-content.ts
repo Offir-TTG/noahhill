@@ -52,10 +52,12 @@ export type EpkContent = {
   };
   facts: { label: string; value: string }[];
   bios: {
-    /** One line. Not displayed on the page: it is the meta and OG description. */
+    /**
+     * One line, for the meta and OpenGraph description. The bio itself is NOT
+     * stored here: the kit renders about.bio from the site content, so the
+     * homepage and the press kit can never disagree about it.
+     */
     one_line: string;
-    /** The bio shown on the page and printed in the kit. */
-    long: string[];
   };
   /**
    * Press quotes. Ships empty on purpose. The section renders a clean
@@ -80,7 +82,7 @@ export type EpkContent = {
   contacts: { role: string; name: string; email: string; note: string }[];
 };
 
-export const EPK_CONTENT: EpkContent = {
+export const DEFAULT_EPK: EpkContent = {
   meta: {
     eyebrow: "electronic press kit · 2026",
     title_line1: "noah",
@@ -104,14 +106,6 @@ export const EPK_CONTENT: EpkContent = {
   bios: {
     one_line:
       "Noah Hill is a singer, songwriter and producer from New Jersey, writing pop songs with rock in them for anyone who has ever felt like a misfit. His single \"hurt somebody\" is out now.",
-
-    long: [
-      "Noah Hill is a singer, songwriter and producer from New Jersey, born 4 February 2006. He taught himself guitar at eleven and was writing his own songs by thirteen. Piano, drums and bass followed, all self-taught, until he could play every part of a record himself.",
-      "The result is pop with rock in its bones, shaped by the writers he grew up on: Ed Sheeran, Teddy Swims, Shawn Mendes, 5 Seconds of Summer and Ryan Tedder. Choruses built to be sung back, carried by a band rather than a laptop.",
-      "He writes for the people who feel alone, left out, like a misfit. Songs about mental health, and about the distance that opens up inside relationships of every kind, romantic and platonic. The aim is not to make those feelings sound pretty. It is to make someone hearing them at 2am feel less alone.",
-      "His single \"fix me\" widened the frame without raising the volume. Its follow-up, \"hurt somebody,\" arrived in 2026 as a meditation on the small cruelties we don't talk about: the door left unanswered, the thing said just to see it land.",
-      "Both were recorded between New York and London, and together they trace the outline of a debut EP coming soon: eight songs about repair, and the distance between wanting to be better and actually being better.",
-    ],
   },
 
   quotes: [],
@@ -143,3 +137,21 @@ export const EPK_CONTENT: EpkContent = {
     { role: "contact", name: "Noah Hill", email: "noahhill.m@gmail.com", note: "Booking, press and general enquiries" },
   ],
 };
+
+/**
+ * Merge stored EPK content over the defaults, so a field added here later does
+ * not break a site whose saved blob predates it. Mirrors mergeContent().
+ */
+export function mergeEpk(partial: Partial<EpkContent> | null | undefined): EpkContent {
+  if (!partial) return DEFAULT_EPK;
+  return {
+    meta:     { ...DEFAULT_EPK.meta,  ...(partial.meta  ?? {}) },
+    facts:    partial.facts    ?? DEFAULT_EPK.facts,
+    bios:     { ...DEFAULT_EPK.bios,  ...(partial.bios  ?? {}) },
+    quotes:   partial.quotes   ?? DEFAULT_EPK.quotes,
+    numbers:  partial.numbers  ?? DEFAULT_EPK.numbers,
+    live:     { ...DEFAULT_EPK.live,  ...(partial.live  ?? {}) },
+    photos:   partial.photos   ?? DEFAULT_EPK.photos,
+    contacts: partial.contacts ?? DEFAULT_EPK.contacts,
+  };
+}

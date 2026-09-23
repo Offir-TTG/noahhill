@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
+import "server-only";
+import { createServiceClient } from "@/lib/supabase/service";
 
 /**
  * Typed configs for each known integration.
@@ -55,9 +56,16 @@ export type Connection<K extends ConnectionId = ConnectionId> = {
 
 /**
  * Read a connection by id. Returns null if missing.
+ *
+ * Uses the service client deliberately. The connections table is protected by
+ * RLS so only admins can read it, but the public subscribe flow also needs the
+ * SMTP settings to send its welcome email, and it runs as an anonymous
+ * visitor. Reading through the cookie client returned no rows there, so the
+ * email was silently skipped. This module is server-only (see the import
+ * above), so the credentials never reach the browser.
  */
 export async function getConnection<K extends ConnectionId>(id: K): Promise<Connection<K> | null> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   const { data, error } = await supabase
     .from("connections")
     .select("id, enabled, config")

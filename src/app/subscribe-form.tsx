@@ -2,54 +2,44 @@
 
 import { useEffect, useState } from "react";
 import { Mail, Check, Sparkles } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/toast";
-
-const FRIENDLY_ERROR: Record<string, string> = {
-  // Common Supabase / Postgres error codes
-  "23505": "you're already on the list — see you soon.",
-  "23502": "looks like the email field is empty.",
-  "22P02": "that doesn't look like a valid email.",
-};
-
-function friendlyMessage(err: { code?: string; message?: string }): string {
-  if (err.code && FRIENDLY_ERROR[err.code]) return FRIENDLY_ERROR[err.code];
-  const msg = (err.message ?? "").toLowerCase();
-  if (msg.includes("network") || msg.includes("fetch")) return "couldn't reach the server. check your connection and try again.";
-  if (msg.includes("invalid email")) return "that doesn't look like a valid email.";
-  return "something went wrong. please try again in a moment.";
-}
+import { subscribe } from "./subscribe-actions";
 
 export default function SubscribeForm() {
   const [loading, setLoading] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
+  const [alreadyMember, setAlreadyMember] = useState(false);
+  const [emailed, setEmailed] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
   const toast = useToast();
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const fd = new FormData(e.currentTarget);
+    // Captured before the await: currentTarget is null by the time it resolves.
+    const form = e.currentTarget;
+    const fd = new FormData(form);
     const email = String(fd.get("email") ?? "").trim().toLowerCase();
     if (!email) return;
 
     setLoading(true);
 
     try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("subscribers")
-        .insert({ email, source: "newsletter" });
+      // Server action rather than a direct insert: it also sends the welcome
+      // email, which needs SMTP credentials the browser must never see.
+      const result = await subscribe(email);
 
-      // Treat duplicate email as success — user is already subscribed.
-      if (error && error.code !== "23505") {
-        toast.error("couldn't subscribe", friendlyMessage(error));
+      if (!result.ok) {
+        toast.error("couldn't subscribe", result.message);
         return;
       }
 
       setSubmittedEmail(email);
+      setAlreadyMember(result.status === "already");
+      setEmailed(result.emailed);
       setShowSuccess(true);
+      form.reset();
     } catch {
-      toast.error("couldn't subscribe", "network issue — please try again.");
+      toast.error("couldn't subscribe", "network issue. please try again.");
     } finally {
       setLoading(false);
     }
@@ -87,13 +77,22 @@ export default function SubscribeForm() {
       </form>
 
       {showSuccess && submittedEmail && (
-        <SuccessPopup email={submittedEmail} onClose={() => setShowSuccess(false)} />
+        <SuccessPopup
+          email={submittedEmail}
+          already={alreadyMember}
+          emailed={emailed}
+          onClose={() => setShowSuccess(false)}
+        />
       )}
     </>
   );
 }
 
-function SuccessPopup({ email, onClose }: { email: string; onClose: () => void }) {
+function SuccessPopup({
+  email, already, emailed, onClose,
+}: {
+  email: string; already: boolean; emailed: boolean; onClose: () => void;
+}) {
   const [entered, setEntered] = useState(false);
 
   useEffect(() => {
@@ -140,11 +139,24 @@ function SuccessPopup({ email, onClose }: { email: string; onClose: () => void }
         </span>
 
         <h2 id="subscribe-success-title" className="mt-6 font-display lowercase text-cream text-3xl">
-          you&apos;re in.
+          {already ? "already in." : "you're in."}
         </h2>
         <p className="mt-3 text-sm text-cream-dim leading-relaxed">
-          we&apos;ll send a heads-up to <span className="text-cream">{email}</span> when something new is coming.
-          <span className="block mt-1">talk soon.</span>
+          {already ? (
+            <>
+              <span className="text-cream">{email}</span> is already on the list.
+              <span className="block mt-1">nothing else to do. talk soon.</span>
+            </>
+          ) : (
+            <>
+              {emailed ? (
+                <>a welcome email is on its way to <span className="text-cream">{email}</span>.</>
+              ) : (
+                <><span className="text-cream">{email}</span> is on the list.</>
+              )}
+              <span className="block mt-1">talk soon.</span>
+            </>
+          )}
         </p>
 
         <button

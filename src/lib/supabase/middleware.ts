@@ -26,17 +26,27 @@ export async function updateSession(request: NextRequest) {
   // Refresh session
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Gate /admin/* (except /admin/login itself)
+  // Admin is not "any signed-in user": Supabase signups are open by default, so
+  // that would let a stranger register and walk in. Access requires the admin
+  // role in app_metadata, which only the service key can set.
+  const isAdmin = user?.app_metadata?.role === "admin";
+
+  // Reachable while signed out: the sign-in page, and the password-reset page
+  // that a recovery email links to.
   const path = request.nextUrl.pathname;
-  if (path.startsWith("/admin") && path !== "/admin/login" && !user) {
+  const PUBLIC_ADMIN_PATHS = ["/admin/login", "/admin/reset-password"];
+  const isPublicAdminPath = PUBLIC_ADMIN_PATHS.includes(path);
+
+  if (path.startsWith("/admin") && !isPublicAdminPath && !isAdmin) {
     const url = request.nextUrl.clone();
     url.pathname = "/admin/login";
-    url.searchParams.set("next", path);
+    if (user) url.searchParams.set("denied", "1");
+    else url.searchParams.set("next", path);
     return NextResponse.redirect(url);
   }
 
-  // If logged-in user hits /admin/login, send to dashboard
-  if (path === "/admin/login" && user) {
+  // If an admin hits /admin/login, send them to the dashboard.
+  if (path === "/admin/login" && isAdmin) {
     const url = request.nextUrl.clone();
     url.pathname = "/admin";
     return NextResponse.redirect(url);
