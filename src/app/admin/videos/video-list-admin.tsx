@@ -13,6 +13,11 @@ const SERVER_ACTION_BODY_LIMIT = 4.5 * 1024 * 1024;
  *  turns a failed upload into an answer before the file is sent. */
 const STORAGE_FILE_LIMIT = 50 * 1024 * 1024;
 
+/** Above this, bandwidth is the real constraint rather than storage: the plan
+ *  includes 2 GB of transfer a month, so a 25 MB file is about 80 full views. */
+const EGRESS_WARN_AT = 25 * 1024 * 1024;
+const MONTHLY_EGRESS = 2 * 1024 * 1024 * 1024;
+
 async function uploadVideoToStorage(file: File): Promise<string> {
   const supabase = createClient();
   const ext = file.name.split(".").pop()?.toLowerCase() || "mp4";
@@ -89,7 +94,14 @@ function VideoForm({ row, onClose }: { row?: Video; onClose: () => void }) {
             toast.error("video too large", msg);
             return;
           }
-          if (vid.size > SERVER_ACTION_BODY_LIMIT) {
+          if (vid.size > EGRESS_WARN_AT) {
+            const views = Math.floor(MONTHLY_EGRESS / vid.size);
+            toast.info(
+              `uploading ${formatBytes(vid.size)}`,
+              `at this size the monthly bandwidth covers about ${views} full views. ` +
+                `youtube or vimeo costs you nothing to serve.`,
+            );
+          } else if (vid.size > SERVER_ACTION_BODY_LIMIT) {
             toast.info("uploading video", `${formatBytes(vid.size)}. this can take a while.`);
           }
           const hostedUrl = await uploadVideoToStorage(vid);
