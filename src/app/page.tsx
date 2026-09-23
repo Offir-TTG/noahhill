@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { Music2, Play, ArrowUpRight, MapPin } from "lucide-react";
@@ -8,8 +9,35 @@ import SubscribeForm from "./subscribe-form";
 import Visuals from "./visuals";
 import { createClient } from "@/lib/supabase/server";
 import { mergeContent, type SiteContent } from "@/lib/site-content";
+import { mergeEpk, type EpkContent } from "@/lib/epk-content";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * Share previews are built from the live site content, so the title cannot go
+ * stale. The image is the same hero photo the page shows, routed through the
+ * optimizer at a size link previews actually use.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const { content, epk } = await loadAll();
+
+  // The hero name is stored lowercase for the display face; a share preview
+  // wants it written normally.
+  const title = `${content.hero.name_line1} ${content.hero.name_line2}`
+    .trim()
+    .replace(/\b[a-z]/g, (c) => c.toUpperCase());
+
+  // Link previews truncate around 150 characters, so use the purpose-built
+  // one-liner rather than the opening paragraph of the biography.
+  const description = epk.bios.one_line || content.newsletter.copy;
+
+  return {
+    title,
+    description,
+    openGraph: { title, description, type: "website", siteName: title },
+    twitter: { card: "summary_large_image", title, description },
+  };
+}
 
 type Song = { id?: string; title: string; year?: string | null; duration?: string | null; audio_url?: string | null; cover_url?: string | null };
 type Video = { title: string; year: string | null; duration: string | null; thumbnail_url: string | null; video_url: string | null };
@@ -45,8 +73,10 @@ async function loadAll() {
       supabase.from("tour_dates").select("*").order("sort_order").order("created_at"),
     ]);
 
+    const raw = (contentRes.data?.data ?? null) as (Partial<SiteContent> & { epk?: Partial<EpkContent> }) | null;
     return {
-      content: mergeContent((contentRes.data?.data ?? null) as Partial<SiteContent> | null),
+      content: mergeContent(raw),
+      epk: mergeEpk(raw?.epk ?? null),
       songs:  (songsRes.data  as Song[]     | null) ?? FALLBACK_SONGS,
       videos: (videosRes.data as Video[]    | null) ?? FALLBACK_VIDEOS,
       tour:   (tourRes.data   as TourDate[] | null) ?? FALLBACK_TOUR,
@@ -54,6 +84,7 @@ async function loadAll() {
   } catch {
     return {
       content: mergeContent(null),
+      epk: mergeEpk(null),
       songs: FALLBACK_SONGS,
       videos: FALLBACK_VIDEOS,
       tour: FALLBACK_TOUR,

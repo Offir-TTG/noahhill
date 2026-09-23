@@ -22,17 +22,26 @@ export const viewport: Viewport = {
   colorScheme: "dark",
 };
 
+/**
+ * Defaults only. The homepage overrides title, description and image from the
+ * database in generateMetadata, so a share preview cannot drift from the site
+ * the way a hardcoded "out now" did.
+ */
 export const metadata: Metadata = {
   // Makes every relative OpenGraph and canonical URL resolve against the real
   // domain instead of localhost.
   metadataBase: new URL(SITE_URL),
-  title: "Noah Hill — Official Site",
-  description:
-    "The official home of Noah Hill. Listen to the new single 'hurt somebody', watch videos, and find tour dates.",
+  title: "Noah Hill",
+  description: "The official home of Noah Hill.",
   openGraph: {
-    title: "Noah Hill — hurt somebody (out now)",
+    title: "Noah Hill",
     description: "The official home of Noah Hill.",
     type: "website",
+    siteName: "Noah Hill",
+  },
+  twitter: {
+    // The default is a small square thumbnail; this shows the full image.
+    card: "summary_large_image",
   },
 };
 
