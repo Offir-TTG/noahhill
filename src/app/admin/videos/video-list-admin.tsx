@@ -3,6 +3,24 @@
 import { useState, useTransition } from "react";
 import { visualKind, unsupportedImageReason } from "@/lib/media";
 import { compressImage, formatBytes } from "@/lib/image-compress";
+import { createClient } from "@/lib/supabase/client";
+
+/** Vercel caps a server action request body at about 4.5 MB, so a video has to
+ *  go straight from the browser to Storage rather than through the server. */
+const SERVER_ACTION_BODY_LIMIT = 4.5 * 1024 * 1024;
+
+async function uploadVideoToStorage(file: File): Promise<string> {
+  const supabase = createClient();
+  const ext = file.name.split(".").pop()?.toLowerCase() || "mp4";
+  const base = file.name.replace(/\.[^.]+$/, "").toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 60) || "video";
+  const path = `${Date.now()}-${base}.${ext}`;
+  const { error } = await supabase.storage.from("videos").upload(path, file, {
+    cacheControl: "3600", upsert: false, contentType: file.type || undefined,
+  });
+  if (error) throw new Error(`Upload failed: ${error.message}`);
+  return supabase.storage.from("videos").getPublicUrl(path).data.publicUrl;
+}
 import { Pencil, Trash2, Plus, Save, X, Film } from "lucide-react";
 import { createVideo, updateVideo, deleteVideo } from "./actions";
 import { useToast } from "@/components/toast";
@@ -56,6 +74,16 @@ function VideoForm({ row, onClose }: { row?: Video; onClose: () => void }) {
             );
           }
         }
+        const vid = fd.get("video");
+        if (vid instanceof File && vid.size > 0) {
+          if (vid.size > SERVER_ACTION_BODY_LIMIT) {
+            toast.info("uploading video", `${formatBytes(vid.size)}. this can take a while.`);
+          }
+          const hostedUrl = await uploadVideoToStorage(vid);
+          fd.set("video_url", hostedUrl);
+          fd.delete("video");
+        }
+
         if (isEdit) await updateVideo(row!.id, fd);
         else await createVideo(fd);
         toast.success(isEdit ? "visual updated" : "visual added", title ? `"${title}" saved.` : undefined);
