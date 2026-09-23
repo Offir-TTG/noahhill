@@ -6,12 +6,19 @@ import { Save, Plus, Trash2, Upload } from "lucide-react";
 import type { SiteContent } from "@/lib/site-content";
 import { saveSiteContent } from "./actions";
 import { createClient } from "@/lib/supabase/client";
+import { compressImage } from "@/lib/image-compress";
+import { unsupportedImageReason } from "@/lib/media";
 
 const slugify = (s: string) =>
   s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 60) || "image";
 
 /** Direct browser-to-Storage upload. Authed via the user's admin session. */
-async function uploadImageToStorage(file: File): Promise<string> {
+async function uploadImageToStorage(input: File): Promise<string> {
+  const reason = await unsupportedImageReason(input);
+  if (reason) throw new Error(reason);
+  // Same treatment as the visuals uploader: shrink once here rather than ship
+  // a multi-megabyte original to every visitor.
+  const file = (await compressImage(input)).file;
   const supabase = createClient();
   const ext  = file.name.split(".").pop()?.toLowerCase() || "jpg";
   const path = `${Date.now()}-${slugify(file.name.replace(/\.[^.]+$/, ""))}.${ext}`;

@@ -15,7 +15,7 @@ export default async function AdminVideosPage() {
     <div className="space-y-8">
       <div>
         <h1 className="font-display lowercase text-cream text-3xl sm:text-4xl">visuals</h1>
-        <p className="mt-2 text-sm text-cream-dim">add music videos with custom thumbnails. external (youtube/vimeo) or self-hosted.</p>
+        <p className="mt-2 text-sm text-cream-dim">photos and videos for the visuals section. videos can be hosted here or linked from youtube/vimeo.</p>
       </div>
 
       {error && (

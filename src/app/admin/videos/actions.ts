@@ -36,12 +36,13 @@ export async function createVideo(formData: FormData) {
   if (thumb && thumb.size > 0) thumbnail_url = await uploadFile("images", thumb);
 
   const kind = String(formData.get("kind") ?? "video");
+  const durationValue = kind === "photo" ? null : duration;
   let video_url: string | null = kind === "photo" ? null : externalVideoUrl;
   if (kind !== "photo" && video && video.size > 0) video_url = await uploadFile("videos", video);
 
   const { error } = await supabase
     .from("videos")
-    .insert({ title, year, duration, sort_order, thumbnail_url, video_url });
+    .insert({ title, year, duration: durationValue, sort_order, thumbnail_url, video_url });
   if (error) throw new Error(error.message);
 
   revalidatePath("/admin/videos");
@@ -68,7 +69,12 @@ export async function updateVideo(id: string, formData: FormData) {
     .maybeSingle();
 
   const kind = String(formData.get("kind") ?? "video");
-  const updates: Record<string, unknown> = { title, year, duration, sort_order };
+  const updates: Record<string, unknown> = {
+    title,
+    year,
+    duration: kind === "photo" ? null : duration,
+    sort_order,
+  };
   if (thumb && thumb.size > 0) updates.thumbnail_url = await uploadFile("images", thumb);
 
   if (kind === "photo") {

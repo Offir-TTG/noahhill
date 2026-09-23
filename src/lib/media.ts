@@ -39,3 +39,29 @@ export function visualPoster(v: VisualLike): string | null {
 export function isPlayableInline(v: VisualLike): boolean {
   return visualKind(v) === "file";
 }
+
+/**
+ * iPhones shoot HEIC, and exporting often keeps a .jpg name while the bytes
+ * stay HEIC. Chrome, Firefox and Edge cannot display that, and Next's image
+ * optimizer passes it through untouched, so the picture is simply blank for
+ * most visitors. The extension and the browser-reported MIME type both lie
+ * about it, so the file signature is the only reliable check.
+ *
+ * Returns an error message, or null when the file is safe to upload.
+ */
+export async function unsupportedImageReason(file: File): Promise<string | null> {
+  const head = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+  const ascii = (from: number, to: number) =>
+    String.fromCharCode(...head.subarray(from, to));
+
+  // ISO base media container: HEIC, HEIF and AVIF all start this way.
+  if (ascii(4, 8) === "ftyp") {
+    const brand = ascii(8, 12).toLowerCase();
+    if (brand.startsWith("avif")) return null; // browsers do support AVIF
+    return (
+      "this is a HEIC photo, which most browsers cannot display. " +
+      "export it as JPEG first, or set iPhone Settings, Camera, Formats to Most Compatible."
+    );
+  }
+  return null;
+}

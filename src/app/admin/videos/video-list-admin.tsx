@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { visualKind } from "@/lib/media";
+import { visualKind, unsupportedImageReason } from "@/lib/media";
+import { compressImage, formatBytes } from "@/lib/image-compress";
 import { Pencil, Trash2, Plus, Save, X, Film } from "lucide-react";
 import { createVideo, updateVideo, deleteVideo } from "./actions";
 import { useToast } from "@/components/toast";
@@ -36,14 +37,33 @@ function VideoForm({ row, onClose }: { row?: Video; onClose: () => void }) {
     const title = String(fd.get("title") ?? "").trim();
     startTransition(async () => {
       try {
+        // Catch HEIC before it reaches storage: once uploaded it looks fine in
+        // the admin list on Safari but is blank for everyone else.
+        const picked = fd.get("thumbnail");
+        if (picked instanceof File && picked.size > 0) {
+          const reason = await unsupportedImageReason(picked);
+          if (reason) { setError(reason); toast.error("unsupported image", reason); return; }
+
+          // Shrink before upload: phone photos are far larger than anything
+          // the site renders, and this costs one pass here instead of every
+          // visitor downloading the original.
+          const shrunk = await compressImage(picked);
+          if (shrunk.changed) {
+            fd.set("thumbnail", shrunk.file);
+            toast.info(
+              "image compressed",
+              `${formatBytes(shrunk.originalBytes)} to ${formatBytes(shrunk.bytes)}.`,
+            );
+          }
+        }
         if (isEdit) await updateVideo(row!.id, fd);
         else await createVideo(fd);
-        toast.success(isEdit ? "video updated" : "video added", title ? `"${title}" saved.` : undefined);
+        toast.success(isEdit ? "visual updated" : "visual added", title ? `"${title}" saved.` : undefined);
         onClose();
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Save failed.";
         setError(msg);
-        toast.error(isEdit ? "could not update video" : "could not add video", msg);
+        toast.error(isEdit ? "could not update visual" : "could not add visual", msg);
       }
     });
   };
@@ -51,7 +71,7 @@ function VideoForm({ row, onClose }: { row?: Video; onClose: () => void }) {
   return (
     <form onSubmit={handle} className="rounded-sm border border-white/10 bg-steel/30 p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <p className="font-display lowercase text-cream text-2xl">{isEdit ? "edit video" : "new video"}</p>
+        <p className="font-display lowercase text-cream text-2xl">{isEdit ? "edit visual" : "new visual"}</p>
         <button type="button" onClick={onClose} className="text-cream-dim hover:text-cream transition" aria-label="Close">
           <X className="size-4" />
         </button>
@@ -86,9 +106,12 @@ function VideoForm({ row, onClose }: { row?: Video; onClose: () => void }) {
 
       <Field label="title" name="title" defaultValue={row?.title ?? ""} required placeholder="hurt somebody" />
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className={`grid gap-3 ${kind === "video" ? "grid-cols-3" : "grid-cols-2"}`}>
         <Field label="year" name="year" defaultValue={row?.year ?? ""} placeholder="2026" />
-        <Field label="duration" name="duration" defaultValue={row?.duration ?? ""} placeholder="3:42" />
+        {/* A still has no runtime, so the field only applies to video. */}
+        {kind === "video" && (
+          <Field label="duration" name="duration" defaultValue={row?.duration ?? ""} placeholder="3:42" />
+        )}
         <Field label="sort" name="sort_order" type="number" defaultValue={String(row?.sort_order ?? 0)} />
       </div>
 
@@ -166,7 +189,7 @@ export default function VideoListAdmin({ rows }: { rows: Video[] }) {
   const onDelete = async (id: string, title: string) => {
     const ok = await confirm({
       title: `delete "${title}"?`,
-      description: "this removes the video from the visuals section.",
+      description: "this removes it from the visuals section.",
       confirmLabel: "delete",
       danger: true,
     });
@@ -175,9 +198,9 @@ export default function VideoListAdmin({ rows }: { rows: Video[] }) {
     startTransition(async () => {
       try {
         await deleteVideo(id);
-        toast.success("video deleted", `"${title}" removed.`);
+        toast.success("visual deleted", `"${title}" removed.`);
       } catch (e) {
-        toast.error("could not delete video", e instanceof Error ? e.message : "please try again.");
+        toast.error("could not delete visual", e instanceof Error ? e.message : "please try again.");
       } finally {
         setDeleting(null);
       }
@@ -187,14 +210,14 @@ export default function VideoListAdmin({ rows }: { rows: Video[] }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
-        <p className="text-xs uppercase tracking-[0.3em] text-cream-dim">{rows.length} {rows.length === 1 ? "video" : "videos"}</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-cream-dim">{rows.length} {rows.length === 1 ? "visual" : "visuals"}</p>
         <button
           type="button"
           onClick={() => setEditing("new")}
           className="inline-flex items-center gap-2 rounded-sm bg-cream px-4 py-2 text-xs font-medium uppercase tracking-[0.2em] text-ink hover:bg-gold transition"
         >
           <Plus className="size-3.5" />
-          add video
+          add visual
         </button>
       </div>
 
@@ -202,7 +225,7 @@ export default function VideoListAdmin({ rows }: { rows: Video[] }) {
 
       {rows.length === 0 ? (
         <div className="rounded-sm border border-dashed border-white/10 p-12 text-center">
-          <p className="text-cream-dim text-sm">no videos yet — click <span className="text-cream">add video</span>.</p>
+          <p className="text-cream-dim text-sm">no visuals yet. click <span className="text-cream">add visual</span>.</p>
         </div>
       ) : (
         <ul className="grid sm:grid-cols-2 gap-4">

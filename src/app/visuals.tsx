@@ -36,7 +36,9 @@ function VisualCard({ visual, fallbackImg }: { visual: Visual; fallbackImg: stri
   const [playing, setPlaying] = useState(false);
   const kind = visualKind(visual);
   const poster = visualPoster(visual) ?? fallbackImg;
-  const meta = [visual.year, visual.duration].filter(Boolean).join(" · ");
+  const meta = [visual.year, kind === "image" ? null : visual.duration]
+    .filter(Boolean)
+    .join(" · ");
 
   const frame = "group relative aspect-[4/5] overflow-hidden rounded-sm bg-steel";
 
