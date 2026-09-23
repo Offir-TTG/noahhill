@@ -96,6 +96,11 @@ function photoSrc({ print }: ImgOpts, url: string, screenW: number, printW: numb
   return print ? displayUrl(url, printW, PRINT_QUALITY) : displayUrl(url, screenW);
 }
 
+/** Lowercase, punctuation-free, for comparing stat labels loosely. */
+function normaliseLabel(s: string) {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
 /** Supabase Storage honours ?download=<name>; anything else just opens in a tab. */
 function downloadUrl(url: string, filename: string) {
   return url.includes("/storage/v1/object/public/")
@@ -553,13 +558,21 @@ function Numbers({
   const rows = [
     ...content.about.stats.map((s) => ({ value: s.value, label: s.label, note: undefined as string | undefined, isLive: false })),
     ...epk.numbers
-      .filter((n) => !content.about.stats.some((s) => s.label.toLowerCase() === n.label.toLowerCase()))
+      // Exact-match deduping let "followers" and "spotify followers" both
+      // render. Treat one label containing the other as the same figure.
+      .filter((n) => {
+        const key = normaliseLabel(n.label);
+        return !content.about.stats.some((s) => {
+          const other = normaliseLabel(s.label);
+          return other === key || other.includes(key) || key.includes(other);
+        });
+      })
       .map((n) => ({ label: n.label, ...live(n) }))
       .filter((r) => r.value !== ""),
   ];
 
   return (
-    <section className="border-y border-white/5 bg-midnight py-14">
+    <section id="numbers" className="border-y border-white/5 bg-midnight py-14">
       <div className="mx-auto max-w-7xl px-6 sm:px-10">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <p className="text-[10px] uppercase tracking-[0.4em] text-cream-dim">by the numbers</p>

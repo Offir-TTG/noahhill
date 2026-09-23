@@ -219,6 +219,7 @@ html { scroll-behavior: smooth; }
      and the footer orphans its copyright line onto a page of its own. Each
      fits within a sheet, so each moves whole instead. */
   #press,
+  #numbers,
   #live,
   #contact,
   .epk-photo-grid,
@@ -245,6 +246,10 @@ html { scroll-behavior: smooth; }
   .epk-grid-4       { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
   .epk-grid-5       { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
   .epk-photo-grid   { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+
+  /* Mixed portrait and square frames left every caption at a different height
+     and the rows looked ragged. One shape for the printed contact sheet. */
+  .epk-photo-grid figure > div { aspect-ratio: 4 / 5 !important; }
   .epk-grid-2 > *, .epk-grid-3 > *, .epk-grid-4 > *, .epk-grid-5 > * {
     grid-column: auto !important;
   }
@@ -260,6 +265,7 @@ html { scroll-behavior: smooth; }
     border: 0 !important;
     background: none !important;
     padding: 0 !important;
+    margin-top: 0.75rem !important;
   }
 
   /* Everything else is short enough to move to the next sheet whole rather than
